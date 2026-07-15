@@ -15,3 +15,8 @@ type Post = {
     parentId: number
     timestamp: number
 }
+
+// --- helpers ---
+const short = (a: Address): string => `${a.slice(0, 6)}...${a.slice(-4)}`
+const clean = (s: string) => s.trim().replace(/\u0000/g, "").slice(0, MAX)
+const byNew = (a: Post, b: Post) => b.timestamp - a.timestamp
