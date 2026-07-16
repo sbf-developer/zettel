@@ -59,7 +59,67 @@ if (typeof document === "undefined") {
     }
     button:disabled { cursor: not-allowed; opacity: 0.45; }
 
-    .app { min-height: 100dvh; }
+    .app { min-height: 100dvh; display: flex; flex-direction: column; }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      backdrop-filter: blur(14px) saturate(1.12);
+      -webkit-backdrop-filter: blur(14px) saturate(1.12);
+      background: rgba(255, 255, 255, 0.88);
+      border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    }
+    .topbar-inner {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 9px 16px;
+      max-width: 980px;
+      width: 100%;
+      margin: 0 auto;
+      box-sizing: border-box;
+      min-width: 0;
+    }
+    .topbar .brand { margin-bottom: 0; flex-shrink: 0; }
+    .brand-btn {
+      border: none;
+      background: none;
+      padding: 0;
+      cursor: pointer;
+      border-radius: 6px;
+      transition: opacity 0.15s ease;
+    }
+    .brand-btn:hover { opacity: 0.7; }
+    .topbar .brand-sm .brand-mark { width: 18px; height: 18px; border-radius: 4px; }
+    .topbar .brand-sm .brand-name { font-size: 15px; }
+    .topbar .nav { flex: 0 0 auto; width: 204px; max-width: 204px; }
+    .topbar .search-wrap {
+      flex: 1 1 120px;
+      min-width: 0;
+      max-width: 240px;
+      width: auto;
+      margin-bottom: 0;
+    }
+    .topbar-account {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+      margin-left: auto;
+    }
+    .topbar-account .wallet-addr {
+      font-size: 11px;
+      font-weight: 500;
+      color: #737373;
+      padding: 4px 8px;
+      border-radius: 6px;
+      background: #fafafa;
+      border: 1px solid #f0f0f0;
+      max-width: 92px;
+    }
+    .search-icon { display: inline-flex; align-items: center; justify-content: center; color: #a3a3a3; flex-shrink: 0; }
+    .sidebar { display: none !important; }
 
     .landing {
       min-height: 100dvh;
@@ -167,6 +227,25 @@ if (typeof document === "undefined") {
     }
     .btn-primary:hover:not(:disabled) { background: #262626; }
     .btn-primary:disabled { background: #e5e5e5; color: #a3a3a3; }
+    .btn-connect {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 9px 18px;
+      min-height: 36px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: -0.01em;
+      color: #171717;
+      background: #fff;
+      border: 1px solid #e5e5e5;
+      width: auto;
+      transition: border-color 0.15s ease, background 0.15s ease;
+    }
+    .btn-connect:hover:not(:disabled) { border-color: #d4d4d4; background: #fafafa; }
+    .btn-connect:disabled { opacity: 0.5; cursor: not-allowed; }
+    .landing-actions { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 100%; }
     .btn-ghost { color: #737373; padding: 8px 12px; font-weight: 500; }
     .btn-ghost:hover:not(:disabled) { color: #171717; }
     .btn-ghost.active { color: #0a0a0a; font-weight: 600; }
@@ -179,6 +258,8 @@ if (typeof document === "undefined") {
     }
     .btn-like:hover:not(:disabled) { color: #525252; }
     .btn-sm { font-size: 13px; padding: 6px 10px; min-height: 32px; }
+    .btn-xs { font-size: 12px; padding: 4px 8px; min-height: 28px; color: #a3a3a3; }
+    .btn-xs:hover:not(:disabled) { color: #525252; }
 
     .sidebar {
       padding: 20px 16px 16px;
@@ -215,45 +296,34 @@ if (typeof document === "undefined") {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 0;
-      padding: 5px;
-      border-radius: 12px;
-      background:
-        repeating-linear-gradient(45deg, rgba(255,255,255,0.12) 0 1px, transparent 1px 4px),
-        repeating-linear-gradient(-45deg, rgba(0,0,0,0.06) 0 1px, transparent 1px 5px),
-        linear-gradient(160deg, #cfcbc5 0%, #f5f4f1 22%, #bab6b0 45%, #eceae6 68%, #c5c1bb 100%);
-      box-shadow:
-        inset 0 1px 0 rgba(255,255,255,0.95),
-        inset 0 -2px 4px rgba(0,0,0,0.06),
-        0 0 0 1px #9a9690,
-        0 0 0 2px rgba(255,255,255,0.65),
-        0 2px 10px rgba(0,0,0,0.08);
+      padding: 2px;
+      border-radius: 8px;
+      background: #fff;
       overflow: hidden;
       isolation: isolate;
     }
-    .nav::after {
+    .nav::before {
       content: "";
       position: absolute;
       inset: 0;
+      padding: 1px;
       border-radius: inherit;
+      background: linear-gradient(135deg, rgba(255,255,255,0.98), rgba(165,165,175,0.5), rgba(255,255,255,0.92));
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
       pointer-events: none;
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.35);
     }
     .nav-indicator {
       position: absolute;
-      top: 5px;
-      left: 5px;
-      width: calc((100% - 10px) / 3);
-      height: calc(100% - 10px);
-      border-radius: 9px;
-      background:
-        linear-gradient(165deg, #5a5a5a 0%, #121212 38%, #2f2f2f 62%, #1a1a1a 100%);
-      box-shadow:
-        inset 0 1px 0 rgba(255,255,255,0.22),
-        inset 0 -2px 0 rgba(0,0,0,0.35),
-        0 0 0 1px rgba(0,0,0,0.45),
-        0 0 0 2px rgba(255,255,255,0.12),
-        0 2px 6px rgba(0,0,0,0.28);
-      transition: transform 0.34s cubic-bezier(0.34, 1.15, 0.64, 1), opacity 0.2s ease;
+      top: 2px;
+      left: 2px;
+      width: calc((100% - 4px) / 3);
+      height: calc(100% - 4px);
+      border-radius: 6px;
+      background: #f5f5f5;
+      box-shadow: none;
+      transition: transform 0.28s cubic-bezier(0.34, 1.1, 0.64, 1), opacity 0.2s ease;
       will-change: transform;
       pointer-events: none;
       z-index: 0;
@@ -263,69 +333,68 @@ if (typeof document === "undefined") {
       position: relative;
       z-index: 1;
       flex: none;
-      min-height: 42px;
-      padding: 8px 12px;
-      font-size: 14px;
-      border-radius: 9px;
+      min-height: 28px;
+      padding: 4px 6px;
+      font-size: 12px;
+      border-radius: 6px;
       background: transparent;
-      color: #5c5c5c;
-      transition: color 0.22s ease;
+      color: #a3a3a3;
+      transition: color 0.2s ease;
     }
-    .nav-btn:hover:not(:disabled) { color: #171717; }
-    .nav-btn.active { color: #fff; font-weight: 600; text-shadow: 0 1px 1px rgba(0,0,0,0.35); }
+    .nav-btn:hover:not(:disabled) { color: #525252; }
+    .nav-btn.active { color: #171717; font-weight: 600; text-shadow: none; }
 
     .main {
       flex: 1;
       min-width: 0;
-      padding: 0 16px 48px;
+      padding: 32px 16px 48px;
       padding-bottom: max(48px, env(safe-area-inset-bottom));
     }
-    .main-inner { max-width: 640px; }
+    .main-inner { max-width: 680px; margin: 0 auto; }
 
     .search-wrap {
       position: relative;
-      margin-bottom: 28px;
-      padding: 12px 14px;
-      border-radius: 12px;
-      background:
-        repeating-linear-gradient(45deg, rgba(255,255,255,0.12) 0 1px, transparent 1px 4px),
-        repeating-linear-gradient(-45deg, rgba(0,0,0,0.06) 0 1px, transparent 1px 5px),
-        linear-gradient(160deg, #cfcbc5 0%, #f5f4f1 22%, #bab6b0 45%, #eceae6 68%, #c5c1bb 100%);
-      box-shadow:
-        inset 0 1px 0 rgba(255,255,255,0.95),
-        inset 0 -2px 4px rgba(0,0,0,0.06),
-        0 0 0 1px #9a9690,
-        0 0 0 2px rgba(255,255,255,0.65),
-        0 2px 10px rgba(0,0,0,0.08);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 0 8px 0 10px;
+      min-height: 32px;
+      border-radius: 8px;
+      background: #fff;
+      isolation: isolate;
     }
-    .search-wrap::after {
+    .search-wrap::before {
       content: "";
       position: absolute;
       inset: 0;
+      padding: 1px;
       border-radius: inherit;
+      background: linear-gradient(135deg, rgba(255,255,255,0.98), rgba(165,165,175,0.5), rgba(255,255,255,0.92));
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
       pointer-events: none;
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.35);
     }
     .search-input {
       width: 100%;
-      padding: 2px 28px 2px 2px;
+      flex: 1; min-width: 0; padding: 0 20px 0 0;
       border: none;
       background: transparent;
       color: #171717;
-      font-size: 15px;
+      font-size: 12px;
       letter-spacing: -0.01em;
     }
     .search-input::placeholder { color: #a3a3a3; }
     .search-input:focus { outline: none; }
     .search-clear {
       position: absolute;
-      right: 0;
+      right: 6px;
       top: 50%;
       transform: translateY(-50%);
-      width: 24px;
-      height: 24px;
+      width: 18px;
+      height: 18px;
       color: #a3a3a3;
-      font-size: 16px;
+      font-size: 14px;
       line-height: 1;
       display: flex;
       align-items: center;
@@ -362,7 +431,9 @@ if (typeof document === "undefined") {
       overflow-wrap: anywhere;
       letter-spacing: -0.011em;
     }
-    .card-actions { display: flex; gap: 8px; }
+    .card-actions { display: flex; align-items: center; gap: 12px; }
+    .reply-count { font-size: 12px; color: #a3a3a3; }
+    .sync-hint { font-size: 12px; color: #a3a3a3; margin: 0 0 12px; }
 
     .editor { margin-top: 8px; }
     .textarea {
@@ -424,88 +495,43 @@ if (typeof document === "undefined") {
 
     @media (min-width: 768px) {
       .landing-inner { max-width: 400px; }
-      .main { padding: 0 32px 64px; }
-      .sidebar { padding: 28px 32px 24px; }
+      .topbar-inner { padding: 9px 24px; gap: 14px; max-width: 1000px; }
+      .topbar .search-wrap { max-width: 320px; }
+      .main { padding: 32px 32px 64px; }
       .textarea { min-height: 180px; font-size: 16px; }
       .content { font-size: 16px; }
-    }
-
-    @media (min-width: 1024px) {
-      body { background: #fafafa; }
-      .app {
-        display: grid;
-        grid-template-columns: 260px 1fr;
-        max-width: 1280px;
-        margin: 0 auto;
-        background: #fff;
-        border-left: 1px solid #f0f0f0;
-        border-right: 1px solid #f0f0f0;
-      }
-      .sidebar {
-        display: flex;
-        flex-direction: column;
-        padding: 40px 28px 32px;
-        border-right: 1px solid #f0f0f0;
-        position: sticky;
-        top: 0;
-        height: 100dvh;
-        background: #fff;
-      }
-      .sidebar-top { margin-bottom: 48px; }
-      .mobile-wallet { display: none; }
-      .sidebar-foot {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 12px;
-        margin-top: auto;
-        padding-top: 24px;
-        border-top: 1px solid #f0f0f0;
-      }
-      .nav {
-        grid-template-columns: 1fr;
-        grid-template-rows: repeat(3, 44px);
-      }
-      .nav-indicator {
-        width: calc(100% - 10px);
-        height: 44px;
-        top: 5px;
-        left: 5px;
-      }
-      .nav-btn {
-        justify-content: flex-start;
-        width: 100%;
-        padding: 10px 14px;
-        font-size: 15px;
-        min-height: 44px;
-      }
-      .main {
-        padding: 48px 56px 64px;
-        display: flex;
-        justify-content: center;
-      }
-      .main-inner { width: 100%; max-width: 680px; }
-      .search-wrap { margin-bottom: 36px; }
-      .card { padding: 24px 0; }
       .landing { background: #fafafa; }
       .landing-inner {
-        max-width: 420px;
+        max-width: 400px;
         background: #fff;
-        padding: 56px 48px;
-        border-radius: 16px;
+        padding: 48px 40px;
+        border-radius: 14px;
         border: 1px solid #f0f0f0;
       }
     }
 
-    @media (min-width: 1440px) {
-      .app { max-width: 1440px; }
-      .main { padding: 56px 80px 72px; }
-      .main-inner { max-width: 720px; }
+    @media (min-width: 1024px) {
+      body { background: #fff; }
+      .main {
+        padding: 32px 48px 64px;
+        display: flex;
+        justify-content: center;
+      }
+      .main-inner { width: 100%; max-width: 680px; }
+      .card { padding: 24px 0; }
+    }
+
+    @media (max-width: 520px) {
+      .topbar-inner { gap: 8px; padding: 8px 12px; }
+      .topbar .nav { width: 156px; max-width: 156px; }
+      .topbar .search-wrap { max-width: 120px; flex-basis: 80px; }
+      .topbar-account .wallet-addr { display: none; }
+      .nav-btn { font-size: 11px; padding: 4px 4px; }
     }
 
     @media (max-width: 359px) {
-      .mobile-wallet { flex-wrap: wrap; justify-content: flex-end; }
-      .nav-btn { font-size: 13px; padding: 8px 8px; }
+      .nav-btn { font-size: 10px; }
+      .topbar .search-wrap { max-width: 72px; }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -523,10 +549,25 @@ import { createPublicClient, createWalletClient, custom, http, parseAbiItem, dec
 import { mainnet } from "https://esm.sh/viem@2/chains"
 
 const MAX = 500
-const RPCS = ["https://ethereum.publicnode.com", "https://rpc.ankr.com/eth"]
+const RPCS = [
+  "https://ethereum.publicnode.com",
+  "https://cloudflare-eth.com",
+  "https://1rpc.io/eth",
+  "https://eth.drpc.org",
+]
 const POLL_MS = 30_000
+// Canonical Zettel feed — baked into source so any frontend instance loads the same chain data.
+// After first deploy, paste address + block here and commit.
+const ZETTEL_FEED = ""
+const ZETTEL_FROM_BLOCK = "0"
+const STORE_SHARED = "zettel-shared-feed"
+const STORE_SHARED_BLOCK = "zettel-shared-from-block"
 const STORE_CONTRACT = "zettel-contract"
 const STORE_BLOCK = "zettel-from-block"
+const STORE_DISCOVERED = "zettel-discovered-feeds"
+const walletContractKey = (w) => `zettel-contract-${w.toLowerCase()}`
+const walletBlockKey = (w) => `zettel-from-block-${w.toLowerCase()}`
+const isAddr = (a) => typeof a === "string" && /^0x[a-fA-F0-9]{40}$/.test(a) && !/^0x0{40}$/i.test(a)
 const BYTECODE = "0x608060405260015f553480156012575f5ffd5b506103e1806100205f395ff3fe608060405234801561000f575f5ffd5b506004361061003f575f3560e01c80631252cb481461004357806361b8ce8c1461005f578063725009d31461007d575b5f5ffd5b61005d600480360381019061005891906101ef565b610099565b005b610067610107565b604051610074919061025b565b60405180910390f35b61009760048036038101906100929190610274565b61010c565b005b3373ffffffffffffffffffffffffffffffffffffffff165f5f8154809291906100c1906102cc565b919050557f9fcb19e60f699236a745fa8a0fc59ec21c36952f3230d3f494e5d3530cdbdb73858585426040516100fa949392919061036d565b60405180910390a3505050565b5f5481565b3373ffffffffffffffffffffffffffffffffffffffff16817fcf765d6f163c9b0d832e2a94f4c8e9bffd32a2c3ca5fdbb8cc67b5fe1441f41360405160405180910390a350565b5f5ffd5b5f5ffd5b5f5ffd5b5f5ffd5b5f5ffd5b5f5f83601f84011261017c5761017b61015b565b5b8235905067ffffffffffffffff8111156101995761019861015f565b5b6020830191508360018202830111156101b5576101b4610163565b5b9250929050565b5f819050919050565b6101ce816101bc565b81146101d8575f5ffd5b50565b5f813590506101e9816101c5565b92915050565b5f5f5f6040848603121561020657610205610153565b5b5f84013567ffffffffffffffff81111561022357610222610157565b5b61022f86828701610167565b93509350506020610242868287016101db565b9150509250925092565b610255816101bc565b82525050565b5f60208201905061026e5f83018461024c565b92915050565b5f6020828403121561028957610288610153565b5b5f610296848285016101db565b91505092915050565b7f4e487b71000000000000000000000000000000000000000000000000000000005f52601160045260245ffd5b5f6102d6826101bc565b91507fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff82036103085761030761029f565b5b600182019050919050565b5f82825260208201905092915050565b828183375f83830152505050565b5f601f19601f8301169050919050565b5f61034c8385610313565b9350610359838584610323565b61036283610331565b840190509392505050565b5f6060820190508181035f830152610386818688610341565b9050610395602083018561024c565b6103a2604083018461024c565b9594505050505056fea26469706673582212202847d4670012fd8b599a095be94807d434458001a5212164a29cf6b99b4a8e7b64736f6c634300081e0033"
 
 const ABI = [
@@ -539,38 +580,163 @@ const POST_EV = ABI[0]
 const LIKE_EV = ABI[1]
 
 const addrEq = (a, b) => a?.toLowerCase() === b?.toLowerCase()
-const postFromArgs = (args) => ({
+const postKey = (p) => `${(p.notebook ?? "").toLowerCase()}:${p.id}`
+const likeKey = (notebook, id) => `${(notebook ?? "").toLowerCase()}:${id}`
+const postFromArgs = (args, notebook) => ({
   id: Number(args.id),
   author: args.author,
   content: args.content,
   parentId: Number(args.parentId),
   timestamp: Number(args.timestamp),
+  notebook: notebook ?? null,
 })
 const postsFromReceipt = (receipt) => {
   const out = []
   for (const log of receipt.logs) {
     try {
       const ev = decodeEventLog({ abi: [POST_EV], data: log.data, topics: log.topics })
-      if (ev.eventName === "PostCreated") out.push(postFromArgs(ev.args))
+      if (ev.eventName === "PostCreated") out.push(postFromArgs(ev.args, receipt.contractAddress ?? receipt.to))
     } catch (_) {}
   }
   return out
 }
 const mergePosts = (prev, add) => {
-  const next = [...prev]
-  for (const p of add) if (!next.some((x) => x.id === p.id)) next.push(p)
-  return next
+  const map = new Map(prev.map((p) => [`${(p.notebook ?? "").toLowerCase()}:${p.id}`, p]))
+  for (const p of add) map.set(`${(p.notebook ?? "").toLowerCase()}:${p.id}`, p)
+  return [...map.values()]
+}
+const applyChainPosts = (prev, chain) => {
+  if (!chain.length && prev.length && contractAddr()) return prev
+  return mergePosts(prev, chain)
 }
 
-const syncContractFromUrl = () => {
-  const q = new URLSearchParams(location.search)
-  const c = q.get("contract")
-  if (c && /^0x[a-fA-F0-9]{40}$/.test(c)) {
-    localStorage.setItem(STORE_CONTRACT, c)
-    const from = q.get("from")
-    if (from && /^\d+$/.test(from)) localStorage.setItem(STORE_BLOCK, from)
-    else if (!localStorage.getItem(STORE_BLOCK)) localStorage.setItem(STORE_BLOCK, "0")
+const migrateToSharedFeed = () => {
+  if (isAddr(ZETTEL_FEED) || isAddr(localStorage.getItem(STORE_SHARED))) return
+  for (const { address, block } of collectStoredFeeds()) {
+    if (isAddr(address)) {
+      localStorage.setItem(STORE_SHARED, address)
+      localStorage.setItem(STORE_SHARED_BLOCK, block)
+      return
+    }
   }
+}
+
+const loadDiscoveredFeeds = () => {
+  try {
+    const raw = JSON.parse(localStorage.getItem(STORE_DISCOVERED) ?? "[]")
+    return Array.isArray(raw) ? raw.filter((f) => isAddr(f?.address)) : []
+  } catch { return [] }
+}
+
+const saveDiscoveredFeed = (address, block, wallet) => {
+  const blockStr = String(block)
+  const list = loadDiscoveredFeeds()
+  const i = list.findIndex((f) => addrEq(f.address, address))
+  if (i >= 0) {
+    if (BigInt(blockStr) < BigInt(list[i].block)) list[i].block = blockStr
+  } else {
+    list.push({ address, block: blockStr })
+  }
+  localStorage.setItem(STORE_DISCOVERED, JSON.stringify(list))
+  if (!isAddr(localStorage.getItem(STORE_SHARED))) {
+    localStorage.setItem(STORE_SHARED, address)
+    localStorage.setItem(STORE_SHARED_BLOCK, blockStr)
+  }
+  if (wallet) {
+    localStorage.setItem(walletContractKey(wallet), address)
+    localStorage.setItem(walletBlockKey(wallet), blockStr)
+  }
+}
+
+const collectStoredFeeds = () => {
+  const seen = new Set()
+  const out = []
+  const add = (address, block) => {
+    const a = address?.toLowerCase?.()
+    if (!isAddr(address) || seen.has(a)) return
+    seen.add(a)
+    out.push({ address, block: block && /^\d+$/.test(block) ? block : "0" })
+  }
+  for (const f of loadDiscoveredFeeds()) add(f.address, f.block)
+  add(localStorage.getItem(STORE_SHARED), localStorage.getItem(STORE_SHARED_BLOCK))
+  add(localStorage.getItem(STORE_CONTRACT), localStorage.getItem(STORE_BLOCK))
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i)
+    if (!key?.startsWith("zettel-contract-0x")) continue
+    const wallet = key.slice("zettel-contract-".length)
+    add(localStorage.getItem(key), localStorage.getItem(walletBlockKey(wallet)))
+  }
+  return out
+}
+
+const sharedFeedAddress = () => {
+  if (isAddr(ZETTEL_FEED)) return { address: ZETTEL_FEED, block: ZETTEL_FROM_BLOCK }
+  const shared = localStorage.getItem(STORE_SHARED)
+  const block = localStorage.getItem(STORE_SHARED_BLOCK)
+  if (isAddr(shared)) return { address: shared, block: block && /^\d+$/.test(block) ? block : "0" }
+  return null
+}
+
+const feedsToLoad = () => {
+  const q = new URLSearchParams(location.search)
+  const urlC = q.get("contract")
+  const urlFrom = q.get("from")
+  if (isAddr(urlC)) return [{ address: urlC, block: urlFrom && /^\d+$/.test(urlFrom) ? urlFrom : "0" }]
+  const seen = new Set()
+  const out = []
+  const add = (address, block) => {
+    const a = address?.toLowerCase?.()
+    if (!isAddr(address) || seen.has(a)) return
+    seen.add(a)
+    out.push({ address, block: block && /^\d+$/.test(String(block)) ? String(block) : "0" })
+  }
+  const primary = sharedFeedAddress()
+  if (primary) add(primary.address, primary.block)
+  for (const f of collectStoredFeeds()) add(f.address, f.block)
+  return out
+}
+migrateToSharedFeed()
+
+const feedConfig = () => {
+  const q = new URLSearchParams(location.search)
+  const urlC = q.get("contract")
+  const urlFrom = q.get("from")
+  if (isAddr(urlC)) {
+    return { address: urlC, block: urlFrom && /^\d+$/.test(urlFrom) ? urlFrom : "0", legacy: true }
+  }
+  if (isAddr(ZETTEL_FEED)) {
+    return { address: ZETTEL_FEED, block: ZETTEL_FROM_BLOCK, legacy: false }
+  }
+  const shared = localStorage.getItem(STORE_SHARED)
+  const sharedBlock = localStorage.getItem(STORE_SHARED_BLOCK)
+  if (isAddr(shared)) {
+    return { address: shared, block: sharedBlock && /^\d+$/.test(sharedBlock) ? sharedBlock : "0", legacy: false }
+  }
+  return null
+}
+const contractAddr = () => feedConfig()?.address ?? null
+const fromBlock = () => BigInt(feedConfig()?.block ?? "0")
+const isLegacyFeed = () => !!feedConfig()?.legacy
+
+const bootstrapSharedFeed = (address, block) => {
+  const blockStr = block.toString()
+  localStorage.setItem(STORE_SHARED, address)
+  localStorage.setItem(STORE_SHARED_BLOCK, blockStr)
+  pinContractUrl(address, blockStr)
+}
+
+const legacyNotebook = (wallet) => {
+  if (!wallet) return null
+  const current = contractAddr()
+  const keys = [walletContractKey(wallet), STORE_CONTRACT]
+  for (const key of keys) {
+    const address = localStorage.getItem(key)
+    if (!isAddr(address)) continue
+    if (current && addrEq(address, current)) continue
+    const block = localStorage.getItem(key === STORE_CONTRACT ? STORE_BLOCK : walletBlockKey(wallet)) ?? "0"
+    return { address, block }
+  }
+  return null
 }
 const pinContractUrl = (address, block) => {
   const q = new URLSearchParams(location.search)
@@ -585,6 +751,26 @@ const clean = (s) => sanitize(s).trim()
 const byNew = (a, b) => b.timestamp - a.timestamp
 const byOld = (a, b) => a.timestamp - b.timestamp
 const fmtTime = (ts) => new Date(ts * 1000).toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })
+
+// Social timeline: all authors, top-level only, newest first, tie-break by likes & replies.
+const buildSocialFeed = (posts, likes) => {
+  const replyCounts = new Map()
+  for (const p of posts) {
+    if (!p.parentId) continue
+    const pk = likeKey(p.notebook, p.parentId)
+    replyCounts.set(pk, (replyCounts.get(pk) ?? 0) + 1)
+  }
+  return posts
+    .filter((p) => !p.parentId && p.content?.trim())
+    .sort((a, b) => {
+      const dt = b.timestamp - a.timestamp
+      if (dt !== 0) return dt
+      const dl = (likes.get(likeKey(b.notebook, b.id)) ?? 0) - (likes.get(likeKey(a.notebook, a.id)) ?? 0)
+      if (dl !== 0) return dl
+      return (replyCounts.get(postKey(b)) ?? 0) - (replyCounts.get(postKey(a)) ?? 0)
+    })
+    .map((p) => ({ ...p, replyCount: replyCounts.get(postKey(p)) ?? 0 }))
+}
 
 const matchesAddr = (addr, q) => {
   const needle = q.trim().toLowerCase()
@@ -606,8 +792,6 @@ const searchAll = (posts, q) => {
   return { users, posts: matched }
 }
 
-const contractAddr = () => localStorage.getItem(STORE_CONTRACT)
-const fromBlock = () => BigInt(localStorage.getItem(STORE_BLOCK) ?? "0")
 let activeProvider = null
 
 const providerName = (p) => {
@@ -687,40 +871,132 @@ async function waitReceipt(hash) {
 }
 
 async function ensureContract(account) {
-  const saved = contractAddr()
-  if (saved) return saved
+  const existing = contractAddr()
+  if (existing) return existing
   const tx = await wallet(account).deployContract({ abi: ABI, bytecode: BYTECODE })
   const receipt = await waitReceipt(tx)
   if (!receipt.contractAddress) throw new Error("Deploy failed")
-  localStorage.setItem(STORE_CONTRACT, receipt.contractAddress)
-  localStorage.setItem(STORE_BLOCK, receipt.blockNumber.toString())
-  pinContractUrl(receipt.contractAddress, receipt.blockNumber)
+  bootstrapSharedFeed(receipt.contractAddress, receipt.blockNumber)
+  console.warn(
+    "Zettel shared feed deployed:",
+    receipt.contractAddress,
+    "from block",
+    receipt.blockNumber.toString(),
+    "— add to ZETTEL_FEED in app.tsx",
+  )
   return receipt.contractAddress
 }
 
-async function loadChain() {
-  const address = contractAddr()
-  if (!address) return { posts: [], likes: new Map() }
-  const block = fromBlock()
-  const read = async (client) => {
-    const [postLogs, likeLogs] = await Promise.all([
-      client.getLogs({ address, event: POST_EV, fromBlock: block }),
-      client.getLogs({ address, event: LIKE_EV, fromBlock: block }),
-    ])
-    const posts = postLogs.map((log) => postFromArgs(log.args))
+async function discoverNotebooksFromWallet(wallet) {
+  return withTimeout(discoverNotebooksFromWalletInner(wallet), 12_000, "discovery timeout").catch(() => [])
+}
+
+async function discoverNotebooksFromWalletInner(wallet) {
+  if (!wallet || !activeProvider?.request) return []
+  const w = wallet.toLowerCase()
+  const client = walletPub()
+  const found = new Map()
+  const note = (address, block) => {
+    if (!isAddr(address)) return
+    const a = address.toLowerCase()
+    const b = BigInt(block)
+    const prev = found.has(a) ? BigInt(found.get(a)) : null
+    const use = !prev || b < prev ? b : prev
+    found.set(a, use.toString())
+    saveDiscoveredFeed(address, use.toString(), wallet)
+  }
+  const scanReceipt = async (hash) => {
+    if (!hash) return
+    try {
+      const receipt = await client.getTransactionReceipt({ hash })
+      if (!receipt || receipt.from?.toLowerCase() !== w) return
+      if (receipt.contractAddress) note(receipt.contractAddress, receipt.blockNumber)
+      for (const log of receipt.logs) {
+        try {
+          const ev = decodeEventLog({ abi: [POST_EV], data: log.data, topics: log.topics })
+          if (ev.eventName === "PostCreated") note(log.address, receipt.blockNumber)
+        } catch (_) {}
+      }
+    } catch (_) {}
+  }
+  const scanTxHashes = async (hashes) => {
+    await Promise.all(hashes.slice(0, 30).map((hash) => scanReceipt(hash)))
+  }
+  const [blockscout, etherscan] = await Promise.allSettled([
+    fetch(`https://eth.blockscout.com/api/v2/addresses/${wallet}/transactions?filter=from`).then((r) => r.json()),
+    fetch(`https://api.etherscan.io/api?module=account&action=txlist&address=${wallet}&startblock=0&endblock=99999999&page=1&offset=40&sort=desc`).then((r) => r.json()),
+  ])
+  if (blockscout.status === "fulfilled") {
+    await scanTxHashes((blockscout.value.items ?? []).map((t) => t.hash))
+  }
+  if (etherscan.status === "fulfilled") {
+    const data = etherscan.value
+    if (data.status === "1" && Array.isArray(data.result)) {
+      await scanTxHashes(data.result.map((t) => t.hash))
+    }
+  }
+  return [...found.entries()].map(([address, block]) => ({ address, block }))
+}
+
+async function loadFeed(address, block) {
+  const pull = async (from) => {
+    const fromBn = BigInt(from)
+    const read = async (client) => {
+      const [postLogs, likeLogs] = await Promise.all([
+        client.getLogs({ address, event: POST_EV, fromBlock: fromBn, toBlock: "latest" }),
+        client.getLogs({ address, event: LIKE_EV, fromBlock: fromBn, toBlock: "latest" }),
+      ])
+      const posts = postLogs.map((log) => postFromArgs(log.args, address))
+      const likes = new Map()
+      for (const log of likeLogs) {
+        const id = Number(log.args.postId)
+        const key = likeKey(address, id)
+        likes.set(key, (likes.get(key) ?? 0) + 1)
+      }
+      return { posts, likes }
+    }
+    const attempts = []
+    if (activeProvider?.request) {
+      try { attempts.push(await read(walletPub())) } catch (_) {}
+    }
+    for (const rpc of RPCS) {
+      try { attempts.push(await read(pub(rpc))) } catch (_) {}
+    }
+    if (!attempts.length) throw new Error("RPC failed")
+    const posts = mergePosts([], attempts.flatMap((a) => a.posts))
     const likes = new Map()
-    for (const log of likeLogs) {
-      const id = Number(log.args.postId)
-      likes.set(id, (likes.get(id) ?? 0) + 1)
+    for (const a of attempts) {
+      for (const [key, n] of a.likes) likes.set(key, Math.max(likes.get(key) ?? 0, n))
     }
     return { posts, likes }
   }
-  try {
-    return await withRpc((rpc) => read(pub(rpc)))
-  } catch {
-    if (activeProvider) return read(walletPub())
-    throw new Error("RPC failed")
+  let result = await pull(block).catch(() => ({ posts: [], likes: new Map() }))
+  if (!result.posts.length && block !== "0") result = await pull("0").catch(() => result)
+  return result
+}
+
+const mergeFeedResults = (acc, r) => {
+  acc.posts = mergePosts(acc.posts, r.posts)
+  for (const [key, n] of r.likes) acc.likes.set(key, Math.max(acc.likes.get(key) ?? 0, n))
+  return acc
+}
+
+async function loadChain() {
+  const feeds = feedsToLoad()
+  if (!feeds.length) return { posts: [], likes: new Map() }
+  const empty = { posts: [], likes: new Map() }
+  const primary = sharedFeedAddress()
+  let acc = { posts: [], likes: new Map() }
+  if (primary) {
+    const pf = feeds.find((f) => addrEq(f.address, primary.address))
+    if (pf) acc = mergeFeedResults(acc, await loadFeed(pf.address, pf.block).catch(() => empty))
   }
+  const rest = feeds.filter((f) => !primary || !addrEq(f.address, primary.address))
+  if (rest.length) {
+    const results = await Promise.all(rest.map((f) => loadFeed(f.address, f.block).catch(() => empty)))
+    for (const r of results) acc = mergeFeedResults(acc, r)
+  }
+  return acc
 }
 
 async function connectWallet(provider) {
@@ -763,14 +1039,19 @@ async function createPost(w, text, parent = 0) {
   return postsFromReceipt(receipt)
 }
 
-async function likePost(w, id) {
-  const address = await ensureContract(w)
-  const hash = await wallet(w).writeContract({ address, abi: ABI, functionName: "likePost", args: [BigInt(id)] })
+async function likePost(w, post) {
+  const address = post.notebook ?? (await ensureContract(w))
+  const hash = await wallet(w).writeContract({ address, abi: ABI, functionName: "likePost", args: [BigInt(post.id)] })
   await waitReceipt(hash)
 }
 
-function Brand({ large }) {
-  return React.createElement("div", { className: `brand${large ? " brand-lg" : " brand-sm"}` },
+function Brand({ large, onClick }) {
+  const Tag = onClick ? "button" : "div"
+  return React.createElement(Tag, {
+    type: onClick ? "button" : undefined,
+    className: `brand${large ? " brand-lg" : " brand-sm"}${onClick ? " brand-btn" : ""}`,
+    onClick,
+  },
     React.createElement("span", { className: "brand-mark", "aria-hidden": "true" }),
     React.createElement("span", { className: "brand-name" }, "Zettel"),
   )
@@ -801,16 +1082,8 @@ function Nav({ screen, searching, onSelect }) {
   const labels = { feed: "Feed", compose: "Write", profile: "Profile" }
   const idx = ids.indexOf(screen)
   const on = searching || idx < 0 ? -1 : idx
-  const [vertical, setVertical] = useState(() => typeof matchMedia !== "undefined" && matchMedia("(min-width: 1024px)").matches)
-  useEffect(() => {
-    const mq = matchMedia("(min-width: 1024px)")
-    const upd = () => setVertical(mq.matches)
-    upd()
-    mq.addEventListener("change", upd)
-    return () => mq.removeEventListener("change", upd)
-  }, [])
   const slide = on >= 0
-    ? { transform: vertical ? `translateY(${on * 100}%)` : `translateX(${on * 100}%)` }
+    ? { transform: `translateX(${on * 100}%)` }
     : undefined
   return React.createElement("nav", { className: "nav" },
     React.createElement("span", {
@@ -829,13 +1102,19 @@ function Nav({ screen, searching, onSelect }) {
 
 function SearchBar({ value, onChange }) {
   return React.createElement("div", { className: "search-wrap" },
+    React.createElement("span", { className: "search-icon", "aria-hidden": "true" },
+      React.createElement("svg", { width: 14, height: 14, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2 },
+        React.createElement("circle", { cx: 11, cy: 11, r: 7 }),
+        React.createElement("path", { d: "M20 20l-3-3" }),
+      ),
+    ),
     React.createElement("input", {
       type: "search",
       className: "search-input",
-      placeholder: "Search posts and users…",
+      placeholder: "Search…",
       value,
       onChange: (e) => onChange(e.target.value),
-      "aria-label": "Search posts and users",
+      "aria-label": "Search",
     }),
     value && React.createElement("button", {
       type: "button",
@@ -853,7 +1132,7 @@ function UserResult({ addr, count, onOpen }) {
   )
 }
 
-function PostCard({ post, likes, onOpen, onLike, small }) {
+function PostCard({ post, likes, replies, onOpen, onLike, small }) {
   const cls = `card${onOpen ? " card-click" : ""}${small ? " card-sm" : ""}`
   return React.createElement("article", { className: cls, onClick: onOpen },
     React.createElement("div", { className: "card-meta" },
@@ -863,6 +1142,7 @@ function PostCard({ post, likes, onOpen, onLike, small }) {
     React.createElement("p", { className: "content" }, post.content),
     React.createElement("div", { className: "card-actions", onClick: (e) => e.stopPropagation() },
       React.createElement(Btn, { variant: "like", onClick: onLike }, `${likes > 0 ? likes : ""}${likes > 0 ? " likes" : "Like"}`),
+      replies > 0 && React.createElement("span", { className: "reply-count" }, `${replies} ${replies === 1 ? "reply" : "replies"}`),
     ),
   )
 }
@@ -879,27 +1159,38 @@ function App() {
   const [viewAddr, setViewAddr] = useState(null)
   const [err, setErr] = useState(null)
   const [busy, setBusy] = useState(false)
+  const [syncing, setSyncing] = useState(false)
+  const [feedLoading, setFeedLoading] = useState(true)
 
   const refresh = useCallback(async (expectIds = []) => {
     for (let i = 0; i < 6; i++) {
       try {
         const d = await loadChain()
-        setPosts(d.posts)
-        setLikes(d.likes)
+        let ok = false
+        setPosts((prev) => {
+          const next = applyChainPosts(prev, d.posts)
+          ok = !expectIds.length || expectIds.every((id) => next.some((p) => p.id === id))
+          return next
+        })
+        setLikes((prev) => {
+          const next = new Map(prev)
+          for (const [key, n] of d.likes) next.set(key, Math.max(next.get(key) ?? 0, n))
+          return next
+        })
         setErr(null)
-        if (!expectIds.length || expectIds.every((id) => d.posts.some((p) => p.id === id))) return
+        setFeedLoading(false)
+        if (ok) return
       } catch {
-        if (i === 5) setErr("Could not read chain")
+        if (i === 5) {
+          setErr("Could not read chain — posts are still on chain, try refreshing")
+          setFeedLoading(false)
+        }
       }
       if (i < 5) await new Promise((r) => setTimeout(r, 2000))
     }
   }, [])
 
   useEffect(() => {
-    syncContractFromUrl()
-    const c = contractAddr()
-    const from = localStorage.getItem(STORE_BLOCK)
-    if (c && !new URLSearchParams(location.search).get("contract")) pinContractUrl(c, from ?? "0")
     void refresh()
     const t = setInterval(() => void refresh(), POLL_MS)
     return () => clearInterval(t)
@@ -909,11 +1200,12 @@ function App() {
     void discoverWallets().then(setWallets)
   }, [])
 
-  const submit = useCallback(async (parentId = 0) => {
+  const submit = useCallback(async (parent = null) => {
     if (!walletAddr) return
     const text = clean(draft)
     if (!text) return setErr("Post cannot be empty")
-    if (parentId && !posts.some((p) => p.id === parentId)) return setErr("Parent not found")
+    const parentId = parent ? parent.id : 0
+    if (parentId && !posts.some((p) => p.id === parentId && addrEq(p.notebook, parent.notebook))) return setErr("Parent not found")
     setBusy(true)
     try {
       const created = await createPost(walletAddr, text, parentId)
@@ -931,24 +1223,47 @@ function App() {
     try {
       const addr = await connectWallet(provider)
       setWalletAddr(addr)
-      void refresh()
+      await refresh()
+      void (async () => {
+        setSyncing(true)
+        try {
+          await discoverNotebooksFromWallet(addr)
+          await refresh()
+        } finally { setSyncing(false) }
+      })()
     } catch (e) {
       activeProvider = null
       setErr(errMsg(e))
     } finally { setBusy(false) }
   }, [refresh])
 
-  const feed = useMemo(() => posts.filter((p) => !p.parentId).sort(byNew), [posts])
-  const post = useMemo(() => posts.find((p) => p.id === postId), [posts, postId])
-  const replies = useMemo(() => posts.filter((p) => p.parentId === postId).sort(byOld), [posts, postId])
+  const feed = useMemo(() => buildSocialFeed(posts, likes), [posts, likes])
+  const post = useMemo(() => posts.find((p) => postKey(p) === postId), [posts, postId])
+  const replies = useMemo(() => {
+    if (!post) return []
+    return posts.filter((p) => p.parentId === post.id && addrEq(p.notebook, post.notebook)).sort(byOld)
+  }, [posts, post])
   const mine = useMemo(() => walletAddr ? posts.filter((p) => addrEq(p.author, walletAddr)).sort(byNew) : [], [posts, walletAddr])
   const search = useMemo(() => searchAll(posts, query), [posts, query])
   const userPosts = useMemo(() => viewAddr ? posts.filter((p) => addrEq(p.author, viewAddr)).sort(byNew) : [], [posts, viewAddr])
   const searching = query.trim().length > 0
 
-  const openPost = (id) => { setPostId(id); setScreen("post"); setQuery("") }
+  const legacy = useMemo(() => legacyNotebook(walletAddr), [walletAddr])
+
+  const openPost = (p) => { setPostId(postKey(p)); setScreen("post"); setQuery("") }
   const openUser = (addr) => { setViewAddr(addr); setScreen("user"); setQuery("") }
   const goScreen = (id) => { setQuery(""); setViewAddr(null); setScreen(id) }
+
+  const resync = useCallback(async () => {
+    if (!walletAddr) return
+    setSyncing(true)
+    setErr(null)
+    try {
+      await discoverNotebooksFromWallet(walletAddr)
+      await refresh()
+    } catch (e) { setErr(errMsg(e)) }
+    finally { setSyncing(false) }
+  }, [walletAddr, refresh])
 
   if (!walletAddr) {
     return React.createElement("div", { className: "landing" },
@@ -963,13 +1278,20 @@ function App() {
             React.createElement("li", null, "If a side panel hangs, open the wallet from its extension icon."),
           ),
         ),
-        wallets === null && React.createElement(Btn, { variant: "primary", disabled: true }, "Looking for wallets…"),
-        wallets?.length === 0 && React.createElement(Btn, { variant: "primary", disabled: true }, "No wallet found"),
-        wallets?.length === 1 && React.createElement(Btn, {
-          variant: "primary",
-          onClick: () => void connect(wallets[0].provider),
-          disabled: busy,
-        }, busy ? "Confirm in wallet…" : "Connect wallet"),
+        wallets === null && React.createElement("div", { className: "landing-actions" },
+          React.createElement("button", { type: "button", className: "btn-connect", disabled: true }, "Looking for wallets…"),
+        ),
+        wallets?.length === 0 && React.createElement("div", { className: "landing-actions" },
+          React.createElement("button", { type: "button", className: "btn-connect", disabled: true }, "No wallet found"),
+        ),
+        wallets?.length === 1 && React.createElement("div", { className: "landing-actions" },
+          React.createElement("button", {
+            type: "button",
+            className: "btn-connect",
+            onClick: () => void connect(wallets[0].provider),
+            disabled: busy,
+          }, busy ? "Confirm in wallet…" : "Connect wallet"),
+        ),
         wallets && wallets.length > 1 && React.createElement("div", { className: "wallet-list" },
           wallets.map((w) => React.createElement("button", {
             key: w.info.uuid,
@@ -987,29 +1309,26 @@ function App() {
   }
 
   const postResults = (list, clickable = true) => list.map((p) => React.createElement(PostCard, {
-    key: p.id, post: p, likes: likes.get(p.id) ?? 0,
-    onOpen: clickable ? () => openPost(p.id) : undefined,
-    onLike: () => void likePost(walletAddr, p.id).then(refresh).catch(() => setErr("Transaction failed")),
+    key: postKey(p), post: p, likes: likes.get(likeKey(p.notebook, p.id)) ?? 0,
+    replies: p.replyCount ?? 0,
+    onOpen: clickable ? () => openPost(p) : undefined,
+    onLike: () => void likePost(walletAddr, p).then(refresh).catch(() => setErr("Transaction failed")),
   }))
 
   return React.createElement("div", { className: "app" },
-    React.createElement("aside", { className: "sidebar" },
-      React.createElement("div", { className: "sidebar-top" },
-        React.createElement(Brand, { large: false }),
-        React.createElement("div", { className: "mobile-wallet" },
+    React.createElement("header", { className: "topbar" },
+      React.createElement("div", { className: "topbar-inner" },
+        React.createElement(Brand, { large: false, onClick: () => goScreen("feed") }),
+        React.createElement(Nav, { screen, searching, onSelect: goScreen }),
+        React.createElement(SearchBar, { value: query, onChange: setQuery }),
+        React.createElement("div", { className: "topbar-account" },
           React.createElement("span", { className: "wallet-addr" }, short(walletAddr)),
-          React.createElement(Btn, { variant: "ghost", className: "btn-sm", onClick: () => { activeProvider = null; setWalletAddr(null); setScreen("feed"); setQuery("") } }, "Leave"),
+          React.createElement(Btn, { variant: "ghost", className: "btn-xs", onClick: () => { activeProvider = null; setWalletAddr(null); setScreen("feed"); setQuery("") } }, "Leave"),
         ),
-      ),
-      React.createElement(Nav, { screen, searching, onSelect: goScreen }),
-      React.createElement("div", { className: "sidebar-foot" },
-        React.createElement("span", { className: "wallet-addr" }, short(walletAddr)),
-        React.createElement(Btn, { variant: "ghost", className: "btn-sm", onClick: () => { activeProvider = null; setWalletAddr(null); setScreen("feed"); setQuery("") } }, "Leave"),
       ),
     ),
     React.createElement("main", { className: "main" },
       React.createElement("div", { className: "main-inner" },
-        React.createElement(SearchBar, { value: query, onChange: setQuery }),
         err && React.createElement("p", { className: "error" }, err),
 
         searching && React.createElement("section", null,
@@ -1027,32 +1346,60 @@ function App() {
           ),
         ),
 
-        !searching && screen === "feed" && (feed.length
-          ? postResults(feed)
-          : React.createElement("p", { className: "empty" }, "No posts yet. Be the first to write something.")),
+        !searching && screen === "feed" && (feedLoading && !feed.length
+          ? React.createElement("p", { className: "empty" }, "Loading feed…")
+          : feed.length
+          ? React.createElement(React.Fragment, null,
+            syncing && React.createElement("p", { className: "sync-hint" }, "Checking for older notebooks…"),
+            postResults(feed),
+          )
+          : React.createElement("p", { className: "empty" }, contractAddr() || feedsToLoad().length
+            ? (isLegacyFeed()
+              ? "Viewing a legacy notebook. Remove ?contract= from the URL for the shared Zettel feed."
+              : syncing
+              ? "Loading feed…"
+              : "No posts yet. Everyone reads the same on-chain feed — publish from Write.")
+            : "No posts yet. Connect wallet and publish — first post creates the shared feed for everyone.")),
         !searching && screen === "post" && post && React.createElement("section", null,
           React.createElement(Btn, { variant: "ghost", className: "back btn-sm", onClick: () => goScreen("feed") }, "← Back"),
           React.createElement(PostCard, {
-            post, likes: likes.get(post.id) ?? 0,
-            onLike: () => void likePost(walletAddr, post.id).then(refresh).catch(() => setErr("Transaction failed")),
+            post, likes: likes.get(likeKey(post.notebook, post.id)) ?? 0,
+            onLike: () => void likePost(walletAddr, post).then(refresh).catch(() => setErr("Transaction failed")),
           }),
           replies.length > 0 && React.createElement("p", { className: "replies-label" }, `${replies.length} ${replies.length === 1 ? "reply" : "replies"}`),
-          replies.map((r) => React.createElement(PostCard, { key: r.id, post: r, likes: likes.get(r.id) ?? 0, small: true })),
-          React.createElement(Editor, { draft, setDraft, onSubmit: () => void submit(post.id), busy, label: "Reply" }),
+          replies.map((r) => React.createElement(PostCard, {
+            key: postKey(r), post: r, likes: likes.get(likeKey(r.notebook, r.id)) ?? 0, small: true,
+          })),
+          React.createElement(Editor, { draft, setDraft, onSubmit: () => void submit(post), busy, label: "Reply" }),
         ),
         !searching && screen === "compose" && React.createElement(React.Fragment, null,
           !contractAddr() && React.createElement("p", { className: "section-sub" },
-            "First post deploys your on-chain notebook (one-time gas fee)."),
-          React.createElement(Editor, { draft, setDraft, onSubmit: () => void submit(0), busy, label: "Publish" }),
+            "First post deploys the shared Zettel feed for everyone (one-time gas fee)."),
+          React.createElement(Editor, { draft, setDraft, onSubmit: () => void submit(null), busy, label: "Publish" }),
         ),
         !searching && screen === "profile" && React.createElement("section", null,
           React.createElement("h2", { className: "section-title" }, short(walletAddr)),
           React.createElement("p", { className: "section-sub" }, `${mine.length} ${mine.length === 1 ? "post" : "posts"} on chain`),
+          React.createElement(Btn, {
+            variant: "ghost",
+            className: "btn-sm",
+            onClick: () => void resync(),
+            disabled: syncing,
+          }, syncing ? "Searching chain…" : "Find my posts on chain"),
+          contractAddr() && !isLegacyFeed() && React.createElement("p", { className: "section-sub" },
+            `Shared feed ${short(contractAddr())} — permanent on Ethereum, any frontend can load it.`),
+          legacy && React.createElement("p", { className: "section-sub" },
+            React.createElement("a", {
+              href: `${location.pathname}?contract=${legacy.address}&from=${legacy.block}`,
+              style: { color: "#525252", textDecoration: "underline" },
+            }, `Looking for an older post? Open your previous notebook (${short(legacy.address)})`)),
+          !syncing && !mine.length && feedsToLoad().length > 0 && React.createElement("p", { className: "section-sub" },
+            `Checked ${feedsToLoad().length} on-chain notebook${feedsToLoad().length === 1 ? "" : "s"} — no posts from this wallet yet.`),
           mine.length
             ? mine.map((p) => React.createElement(PostCard, {
-                key: p.id, post: p, likes: likes.get(p.id) ?? 0, small: true,
-                onOpen: () => openPost(p.id),
-                onLike: () => void likePost(walletAddr, p.id).then(refresh).catch(() => setErr("Transaction failed")),
+                key: postKey(p), post: p, likes: likes.get(likeKey(p.notebook, p.id)) ?? 0, small: true,
+                onOpen: () => openPost(p),
+                onLike: () => void likePost(walletAddr, p).then(refresh).catch(() => setErr("Transaction failed")),
               }))
             : React.createElement("p", { className: "empty" }, "You haven't posted yet."),
         ),
@@ -1062,9 +1409,9 @@ function App() {
           React.createElement("p", { className: "section-sub" }, `${userPosts.length} ${userPosts.length === 1 ? "post" : "posts"} on chain`),
           userPosts.length
             ? userPosts.map((p) => React.createElement(PostCard, {
-                key: p.id, post: p, likes: likes.get(p.id) ?? 0, small: true,
-                onOpen: () => openPost(p.id),
-                onLike: () => void likePost(walletAddr, p.id).then(refresh).catch(() => setErr("Transaction failed")),
+                key: postKey(p), post: p, likes: likes.get(likeKey(p.notebook, p.id)) ?? 0, small: true,
+                onOpen: () => openPost(p),
+                onLike: () => void likePost(walletAddr, p).then(refresh).catch(() => setErr("Transaction failed")),
               }))
             : React.createElement("p", { className: "empty" }, "No posts from this address."),
         ),
