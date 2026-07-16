@@ -25,8 +25,8 @@ if (typeof document === "undefined") {
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23fff'/%3E%3Crect x='7' y='6' width='18' height='22' rx='3' fill='%23fafafa' stroke='%23ebebeb'/%3E%3Cpath d='M11 12h10M11 16h8M11 20h9' stroke='%23d4d4d4' stroke-width='1.5' stroke-linecap='round'/%3E%3Ccircle cx='23' cy='23' r='3' fill='%230a0a0a'/%3E%3C/svg%3E" />
-  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23fff'/%3E%3Crect x='7' y='6' width='18' height='22' rx='3' fill='%23fafafa' stroke='%23ebebeb'/%3E%3Cpath d='M11 12h10M11 16h8M11 20h9' stroke='%23d4d4d4' stroke-width='1.5' stroke-linecap='round'/%3E%3Ccircle cx='23' cy='23' r='3' fill='%230a0a0a'/%3E%3C/svg%3E" />
+  <link rel="icon" type="image/svg+xml" sizes="32x32" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230a0a0a'/%3E%3Crect x='4' y='3' width='24' height='26' rx='3' fill='%23fff'/%3E%3Cpath d='M8 10h16M8 15h11M8 20h14' stroke='%230a0a0a' stroke-width='3' stroke-linecap='round'/%3E%3Ccircle cx='25' cy='25' r='4.5' fill='%230a0a0a'/%3E%3C/svg%3E" />
+  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230a0a0a'/%3E%3Crect x='4' y='3' width='24' height='26' rx='3' fill='%23fff'/%3E%3Cpath d='M8 10h16M8 15h11M8 20h14' stroke='%230a0a0a' stroke-width='3' stroke-linecap='round'/%3E%3Ccircle cx='25' cy='25' r='4.5' fill='%230a0a0a'/%3E%3C/svg%3E" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; text-rendering: optimizeLegibility; }
@@ -67,20 +67,8 @@ if (typeof document === "undefined") {
       width: 28px;
       height: 28px;
       border-radius: 8px;
-      background: #fafafa;
-      border: 1px solid #ebebeb;
-      position: relative;
       flex-shrink: 0;
-    }
-    .brand-mark::after {
-      content: "";
-      position: absolute;
-      right: 5px;
-      bottom: 5px;
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: #0a0a0a;
+      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230a0a0a'/%3E%3Crect x='4' y='3' width='24' height='26' rx='3' fill='%23fff'/%3E%3Cpath d='M8 10h16M8 15h11M8 20h14' stroke='%230a0a0a' stroke-width='3' stroke-linecap='round'/%3E%3Ccircle cx='25' cy='25' r='4.5' fill='%230a0a0a'/%3E%3C/svg%3E") center/cover no-repeat;
     }
     .brand-name {
       font-size: 28px;
@@ -90,7 +78,6 @@ if (typeof document === "undefined") {
       line-height: 1;
     }
     .brand-sm .brand-mark { width: 22px; height: 22px; border-radius: 6px; }
-    .brand-sm .brand-mark::after { width: 5px; height: 5px; right: 4px; bottom: 4px; }
     .brand-sm .brand-name { font-size: 17px; letter-spacing: -0.035em; }
     .tagline {
       color: #737373;
