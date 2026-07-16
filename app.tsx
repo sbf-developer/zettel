@@ -94,6 +94,20 @@ if (typeof document === "undefined") {
       margin-bottom: 20px;
       letter-spacing: -0.01em;
     }
+    .wallet-help {
+      text-align: left;
+      font-size: 13px;
+      color: #737373;
+      line-height: 1.55;
+      margin-bottom: 24px;
+      padding: 14px 16px;
+      background: #fafafa;
+      border-radius: 12px;
+      border: 1px solid #f0f0f0;
+    }
+    .wallet-help ol { padding-left: 18px; margin: 0; }
+    .wallet-help li { margin-bottom: 6px; }
+    .wallet-help li:last-child { margin-bottom: 0; }
 
     .btn {
       display: inline-flex;
@@ -472,6 +486,13 @@ function App() {
         React.createElement(Brand, { large: true }),
         React.createElement("p", { className: "tagline" }, "Atomic notes on chain. Linked permanently."),
         err && React.createElement("p", { className: "error" }, err),
+        err?.includes("not responding") && React.createElement("div", { className: "wallet-help" },
+          React.createElement("ol", null,
+            React.createElement("li", null, "Close the MetaMask side panel (the spinning fox)."),
+            React.createElement("li", null, "Open MetaMask from the extension icon → Restart MetaMask."),
+            React.createElement("li", null, "Reload this page, then click Connect wallet again."),
+          ),
+        ),
         React.createElement(Btn, { variant: "primary", onClick: () => void connect(), disabled: busy },
           busy ? "Confirm in wallet…" : "Connect wallet"),
       ),
