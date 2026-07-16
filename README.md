@@ -26,12 +26,11 @@ Before launch, put the deployed contract address and deployment block into `ZETT
 
 For a new deployment, open `http://localhost:5173/?setup=1`, connect the maintainer wallet, open Write, and click **Deploy canonical feed** once. Copy the displayed address and block into `app.tsx`, then restart and publish the resulting build. The temporary in-session feed is not a production locator until those constants are committed.
 
-An older feed can be inspected explicitly with `?contract=0x...&from=...`; recovery URLs are read-only and never replace the canonical feed.
-
 ## Features
 
 - Browse the shared on-chain feed without a wallet
 - Connect a wallet only for write actions
+- Click an author to view all posts from that wallet address
 - Publish notes up to 500 UTF-8 bytes
 - Reply to posts and like notes once per wallet per post
 - View your on-chain profile

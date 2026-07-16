@@ -482,6 +482,16 @@ if (typeof document === "undefined") {
     }
     .author { font-size: 13px; font-weight: 600; color: #171717; letter-spacing: -0.02em; }
     .author-sm { font-size: 12px; font-weight: 600; }
+    .author-link {
+      border: 0;
+      padding: 0;
+      background: transparent;
+      color: inherit;
+      font: inherit;
+      cursor: pointer;
+      text-align: left;
+    }
+    .author-link:hover { text-decoration: underline; }
     .time { font-size: 12px; color: #a3a3a3; }
     .content {
       font-size: 15px;
@@ -691,15 +701,11 @@ const RPCS = [
 const POLL_MS = 30_000
 // The contract address and deployment block are the permanent application root.
 // Deploy the secure contract once and commit these values to every frontend build.
-// Local storage is migration-only; it must never select the production feed.
+// Browser storage is not used for feed identity; every read starts from these values.
 // Canonical Zettel feed — baked into source so any frontend instance loads the same chain data.
 // Deploy once and paste the address + block here before publishing.
 const ZETTEL_FEED = ""
 const ZETTEL_FROM_BLOCK = "0"
-const STORE_CONTRACT = "zettel-contract"
-const STORE_BLOCK = "zettel-from-block"
-const walletContractKey = (w) => `zettel-contract-${w.toLowerCase()}`
-const walletBlockKey = (w) => `zettel-from-block-${w.toLowerCase()}`
 const isAddr = (a) => typeof a === "string" && /^0x[a-fA-F0-9]{40}$/.test(a) && !/^0x0{40}$/i.test(a)
 const canonicalFeedConfigured = () => isAddr(ZETTEL_FEED) && /^\d+$/.test(String(ZETTEL_FROM_BLOCK))
 let sessionFeed = null
@@ -765,57 +771,20 @@ const sharedFeedAddress = () => {
 }
 
 const feedsToLoad = () => {
-  const q = new URLSearchParams(location.search)
-  const urlC = q.get("contract")
-  const urlFrom = q.get("from")
-  if (isAddr(urlC)) return [{ address: urlC, block: urlFrom && /^\d+$/.test(urlFrom) ? urlFrom : "0" }]
-  const seen = new Set()
-  const out = []
-  const add = (address, block) => {
-    const a = address?.toLowerCase?.()
-    if (!isAddr(address) || seen.has(a)) return
-    seen.add(a)
-    out.push({ address, block: block && /^\d+$/.test(String(block)) ? String(block) : "0" })
-  }
   const primary = sharedFeedAddress()
-  if (primary) add(primary.address, primary.block)
-  return out
+  return primary ? [{ address: primary.address, block: primary.block }] : []
 }
 
 const feedConfig = () => {
-  const q = new URLSearchParams(location.search)
-  const urlC = q.get("contract")
-  const urlFrom = q.get("from")
-  if (isAddr(urlC)) {
-    return {
-      address: urlC,
-      block: urlFrom && /^\d+$/.test(urlFrom) ? urlFrom : "0",
-      legacy: true,
-    }
-  }
   const shared = configuredFeed()
   if (shared) {
-    return { address: shared.address, block: shared.block, legacy: false }
+    return { address: shared.address, block: shared.block }
   }
   return null
 }
 const contractAddr = () => feedConfig()?.address ?? null
 const fromBlock = () => BigInt(feedConfig()?.block ?? "0")
-const isLegacyFeed = () => !!feedConfig()?.legacy
 
-const legacyNotebook = (wallet) => {
-  if (!wallet) return null
-  const current = contractAddr()
-  const keys = [walletContractKey(wallet), STORE_CONTRACT]
-  for (const key of keys) {
-    const address = localStorage.getItem(key)
-    if (!isAddr(address)) continue
-    if (current && addrEq(address, current)) continue
-    const block = localStorage.getItem(key === STORE_CONTRACT ? STORE_BLOCK : walletBlockKey(wallet)) ?? "0"
-    return { address, block }
-  }
-  return null
-}
 const short = (a) => `${a.slice(0, 6)}...${a.slice(-4)}`
 const utf8Length = (s) => new TextEncoder().encode(s).length
 const sanitize = (s) => {
@@ -1012,9 +981,6 @@ async function ensureContract() {
   const config = feedConfig()
   if (!config?.address) {
     throw new Error("The shared feed is not configured. Deploy it once, then set ZETTEL_FEED in app.tsx.")
-  }
-  if (config.legacy) {
-    throw new Error("This is a legacy feed and is read-only. Remove the recovery URL before publishing.")
   }
   return verifyZettelContract(config.address)
 }
@@ -1260,7 +1226,7 @@ function ActionIcon({ kind, active = false }) {
   )
 }
 
-function PostCard({ post, likes, replies, onOpen, onLike, onReply, small, hero, liked = false, likeBusy = false }) {
+function PostCard({ post, likes, replies, onOpen, onOpenUser, onLike, onReply, small, hero, liked = false, likeBusy = false }) {
   const cls = `card${onOpen ? " card-click" : ""}${small ? " card-sm" : ""}${hero ? " card-hero" : ""}`
   const openProps = onOpen ? {
     onClick: onOpen,
@@ -1269,6 +1235,15 @@ function PostCard({ post, likes, replies, onOpen, onLike, onReply, small, hero, 
     onKeyDown: (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onOpen() } },
     "aria-label": `Open post by ${short(post.author)}`,
   } : {}
+  const author = onOpenUser
+    ? React.createElement("button", {
+      type: "button",
+      className: `author author-link${small ? " author-sm" : ""}`,
+      onClick: (e) => { e.stopPropagation(); onOpenUser(post.author) },
+      onKeyDown: (e) => e.stopPropagation(),
+      "aria-label": `View posts by ${short(post.author)}`,
+    }, short(post.author))
+    : React.createElement("span", { className: `author${small ? " author-sm" : ""}` }, short(post.author))
   return React.createElement("article", { className: cls, ...openProps },
     React.createElement("div", {
       className: `avatar${small ? " avatar-sm" : ""}`,
@@ -1277,7 +1252,7 @@ function PostCard({ post, likes, replies, onOpen, onLike, onReply, small, hero, 
     }, avatarLetters(post.author)),
     React.createElement("div", { className: "card-body" },
       React.createElement("div", { className: "card-meta" },
-        React.createElement("span", { className: `author${small ? " author-sm" : ""}` }, short(post.author)),
+        author,
         React.createElement("time", { className: "time" }, fmtTime(post.timestamp)),
       ),
       React.createElement("p", { className: "content" }, post.content),
@@ -1303,7 +1278,7 @@ function PostCard({ post, likes, replies, onOpen, onLike, onReply, small, hero, 
   )
 }
 
-function CommentTree({ root, posts, likes, depth, onLike, onReply, onOpen, isLiked, isLikeBusy, seen = new Set([postKey(root)]) }) {
+function CommentTree({ root, posts, likes, depth, onLike, onReply, onOpen, onOpenUser, isLiked, isLikeBusy, seen = new Set([postKey(root)]) }) {
   const kids = childrenOf(posts, root, seen)
   if (!kids.length) return null
   return React.createElement("div", { className: depth === 0 ? "thread" : null },
@@ -1319,11 +1294,12 @@ function CommentTree({ root, posts, likes, depth, onLike, onReply, onOpen, isLik
         replies: countDescendants(posts, c),
         small: true,
         onOpen: () => onOpen(c),
+        onOpenUser: () => onOpenUser(c.author),
         onLike: () => onLike(c),
         onReply: () => onReply(c),
       }),
       React.createElement(CommentTree, {
-        root: c, posts, likes, depth: depth + 1, onLike, onReply, onOpen, isLiked, isLikeBusy,
+        root: c, posts, likes, depth: depth + 1, onLike, onReply, onOpen, onOpenUser, isLiked, isLikeBusy,
         seen: new Set([...seen, postKey(c)]),
       }),
     )),
@@ -1473,16 +1449,14 @@ function App() {
   const post = useMemo(() => posts.find((p) => postKey(p) === postId), [posts, postId])
   const threadCount = useMemo(() => post ? countDescendants(posts, post) : 0, [posts, post])
   const mine = useMemo(() => walletAddr
-    ? posts.filter((p) => addrEq(p.author, walletAddr) && isRootPost(p)).sort(byNew)
+    ? posts.filter((p) => addrEq(p.author, walletAddr)).sort(byNew)
     : [], [posts, walletAddr])
   const search = useMemo(() => searchAll(posts, query), [posts, query])
   const userPosts = useMemo(() => viewAddr
-    ? posts.filter((p) => addrEq(p.author, viewAddr) && isRootPost(p)).sort(byNew)
+    ? posts.filter((p) => addrEq(p.author, viewAddr)).sort(byNew)
     : [], [posts, viewAddr])
   const searching = query.trim().length > 0
   const activeFeed = feedConfig()
-
-  const legacy = useMemo(() => legacyNotebook(walletAddr), [walletAddr])
 
   const isLiked = useCallback((p) => !!walletAddr && !!likedBy.get(likeKey(p.notebook, p.id))?.has(walletAddr.toLowerCase()), [walletAddr, likedBy])
   const isLikeBusy = useCallback((p) => likePending.has(likeKey(p.notebook, p.id)), [likePending])
@@ -1549,6 +1523,7 @@ function App() {
     replies: p.replyCount ?? countDescendants(posts, p),
     liked: isLiked(p), likeBusy: isLikeBusy(p),
     onOpen: clickable ? () => openPost(p) : undefined,
+    onOpenUser: () => openUser(p.author),
     onLike: () => doLike(p),
     onReply: () => startReply(p),
   }))
@@ -1632,13 +1607,9 @@ function App() {
           )
           : React.createElement("p", { className: "empty" }, !activeFeed
             ? "The shared feed is not configured yet. Set ZETTEL_FEED and ZETTEL_FROM_BLOCK in app.tsx."
-            : contractAddr() || feedsToLoad().length
-            ? (isLegacyFeed()
-              ? "Viewing a legacy notebook. Remove ?contract= from the URL for the shared Zettel feed."
-              : syncing
-              ? "Loading feed…"
-              : "No posts yet. Everyone reads the same on-chain feed — publish from Write.")
-            : "No posts yet. The canonical on-chain feed is ready for publishing.")),
+            : syncing
+            ? "Loading feed…"
+            : "No posts yet. Everyone reads the same on-chain feed — publish from Write.")),
 
         !searching && screen === "post" && post && React.createElement("section", { className: "post-view" },
           React.createElement(Btn, { variant: "ghost", className: "back btn-sm", onClick: () => goScreen("feed") }, "← Feed"),
@@ -1647,6 +1618,7 @@ function App() {
             likes: likes.get(likeKey(post.notebook, post.id)) ?? 0,
             liked: isLiked(post), likeBusy: isLikeBusy(post),
             replies: threadCount,
+            onOpenUser: () => openUser(post.author),
             onLike: () => doLike(post),
             onReply: () => setReplyTo(null),
           }),
@@ -1657,6 +1629,7 @@ function App() {
             onLike: doLike,
             onReply: startReply,
             onOpen: openPost,
+            onOpenUser: openUser,
             isLiked,
             isLikeBusy,
           }),
@@ -1683,8 +1656,6 @@ function App() {
             "Publishing is disabled until the maintainer configures the canonical feed contract."),
           sessionFeed && !canonicalFeedConfigured() && React.createElement("p", { className: "section-sub" },
             `This session feed is temporary. Commit ${sessionFeed.address} and block ${sessionFeed.block} to app.tsx before sharing the frontend.`),
-          isLegacyFeed() && React.createElement("p", { className: "section-sub" },
-            "This recovery feed is read-only. Remove the recovery URL to use the canonical feed."),
           setupMode() && !activeFeed && React.createElement(Btn, {
             variant: "primary",
             onClick: () => void setupFeed(),
@@ -1692,7 +1663,7 @@ function App() {
           }, busy ? "Confirm in wallet…" : walletAddr ? "Deploy canonical feed" : "Connect maintainer wallet first"),
           React.createElement(Editor, {
             draft, setDraft, onSubmit: () => void submit(null), busy, label: "Publish",
-            disabled: !activeFeed || isLegacyFeed(),
+            disabled: !activeFeed,
           }),
         ),
 
@@ -1705,13 +1676,8 @@ function App() {
             onClick: () => void resync(),
             disabled: syncing,
           }, syncing ? "Refreshing feed…" : "Refresh my posts"),
-          contractAddr() && !isLegacyFeed() && React.createElement("p", { className: "section-sub" },
+          contractAddr() && React.createElement("p", { className: "section-sub" },
             `Shared feed ${short(contractAddr())} — permanent on Ethereum, any frontend can load it.`),
-          legacy && React.createElement("p", { className: "section-sub" },
-            React.createElement("a", {
-              href: `${location.pathname}?contract=${legacy.address}&from=${legacy.block}`,
-              style: { color: "#525252", textDecoration: "underline" },
-            }, `Looking for an older post? Open your previous notebook (${short(legacy.address)})`)),
           !syncing && !mine.length && feedsToLoad().length > 0 && React.createElement("p", { className: "section-sub" },
             `Checked ${feedsToLoad().length} on-chain notebook${feedsToLoad().length === 1 ? "" : "s"} — no posts from this wallet yet.`),
           mine.length
@@ -1721,6 +1687,7 @@ function App() {
                 liked: isLiked(p), likeBusy: isLikeBusy(p),
                 replies: countDescendants(posts, p), small: true,
                 onOpen: () => openPost(p),
+                onOpenUser: () => openUser(p.author),
                 onLike: () => doLike(p),
                 onReply: () => startReply(p),
               })),
@@ -1739,6 +1706,7 @@ function App() {
                 liked: isLiked(p), likeBusy: isLikeBusy(p),
                 replies: countDescendants(posts, p), small: true,
                 onOpen: () => openPost(p),
+                onOpenUser: () => openUser(p.author),
                 onLike: () => doLike(p),
                 onReply: () => startReply(p),
               })),
