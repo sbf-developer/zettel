@@ -6,6 +6,8 @@ On-chain zettelkasten. Atomic notes, permanently linked.
 
 ![Zettel feed screen](screenshot-feed.png)
 
+![Zettel profile screen](screenshot-profile.png)
+
 ## What it is
 
 Zettel is a single-file web app for writing short notes that live on Ethereum. Posts, replies, and likes are stored on chain. No platform can delete them.
