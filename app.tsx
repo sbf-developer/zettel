@@ -5,15 +5,43 @@ if (typeof document === "undefined") {
   const { readFileSync } = await import("node:fs")
   const { createServer } = await import("node:http")
   const { fileURLToPath } = await import("node:url")
+  const { randomBytes } = await import("node:crypto")
   const src = readFileSync(fileURLToPath(import.meta.url), "utf8")
-  const html = src.match(/\/\*html([\s\S]*?)html\*\//)?.[1]?.trim() ?? ""
-  createServer((_req, res) => {
+  const nonce = randomBytes(16).toString("base64")
+  const html = (src.match(/\/\*html([\s\S]*?)html\*\//)?.[1]?.trim() ?? "")
+    .replace('<script type="module">', `<script type="module" nonce="${nonce}">`)
+  const contentSecurityPolicy = [
+    "default-src 'self'",
+    `script-src 'nonce-${nonce}' https://esm.sh`,
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    "font-src 'self' https://fonts.gstatic.com",
+    "img-src 'self' data: https:",
+    "connect-src 'self' https://ethereum.publicnode.com https://cloudflare-eth.com https://1rpc.io https://eth.drpc.org",
+    "base-uri 'none'",
+    "form-action 'none'",
+    "frame-ancestors 'none'",
+    "object-src 'none'",
+    "upgrade-insecure-requests",
+  ].join("; ")
+  createServer((req, res) => {
+    if (req.method !== "GET" && req.method !== "HEAD") {
+      res.writeHead(405, { "Content-Type": "text/plain; charset=utf-8", Allow: "GET, HEAD" })
+      res.end("Method not allowed")
+      return
+    }
     res.writeHead(200, {
       "Content-Type": "text/html",
       "Cache-Control": "no-store",
+      "Content-Security-Policy": contentSecurityPolicy,
+      "X-Content-Type-Options": "nosniff",
+      "X-Frame-Options": "DENY",
+      "Referrer-Policy": "no-referrer",
+      "Permissions-Policy": "camera=(), microphone=(), geolocation=(), payment=()",
+      "Cross-Origin-Opener-Policy": "same-origin",
+      "Cross-Origin-Resource-Policy": "same-origin",
     })
-    res.end(html)
-  }).listen(5173, () => console.log("http://localhost:5173"))
+    res.end(req.method === "HEAD" ? undefined : html)
+  }).listen(5173, "127.0.0.1", () => console.log("http://localhost:5173"))
 }
 
 /*html
@@ -58,6 +86,7 @@ if (typeof document === "undefined") {
       touch-action: manipulation;
     }
     button:disabled { cursor: not-allowed; opacity: 0.45; }
+    .btn-like:disabled.liked { opacity: 1; cursor: default; color: #0a0a0a; }
 
     .app { min-height: 100dvh; display: flex; flex-direction: column; }
 
@@ -647,12 +676,12 @@ if (typeof document === "undefined") {
 <body>
 <div id="root"></div>
 <script type="module">
-import React, { useCallback, useEffect, useMemo, useState } from "https://esm.sh/react@19"
-import { createRoot } from "https://esm.sh/react-dom@19/client"
-import { createPublicClient, createWalletClient, custom, http, parseAbiItem, decodeEventLog } from "https://esm.sh/viem@2"
-import { mainnet } from "https://esm.sh/viem@2/chains"
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "https://esm.sh/react@19.2.7"
+import { createRoot } from "https://esm.sh/react-dom@19.2.7/client"
+import { createPublicClient, createWalletClient, custom, http, parseAbiItem, decodeEventLog } from "https://esm.sh/viem@2.55.2"
+import { mainnet } from "https://esm.sh/viem@2.55.2/chains"
 
-const MAX = 500
+const MAX = 500 // UTF-8 bytes, enforced both here and in the contract
 const RPCS = [
   "https://ethereum.publicnode.com",
   "https://cloudflare-eth.com",
@@ -674,23 +703,34 @@ const walletBlockKey = (w) => `zettel-from-block-${w.toLowerCase()}`
 const isAddr = (a) => typeof a === "string" && /^0x[a-fA-F0-9]{40}$/.test(a) && !/^0x0{40}$/i.test(a)
 const BYTECODE = "0x608060405260015f553480156012575f5ffd5b506103e1806100205f395ff3fe608060405234801561000f575f5ffd5b506004361061003f575f3560e01c80631252cb481461004357806361b8ce8c1461005f578063725009d31461007d575b5f5ffd5b61005d600480360381019061005891906101ef565b610099565b005b610067610107565b604051610074919061025b565b60405180910390f35b61009760048036038101906100929190610274565b61010c565b005b3373ffffffffffffffffffffffffffffffffffffffff165f5f8154809291906100c1906102cc565b919050557f9fcb19e60f699236a745fa8a0fc59ec21c36952f3230d3f494e5d3530cdbdb73858585426040516100fa949392919061036d565b60405180910390a3505050565b5f5481565b3373ffffffffffffffffffffffffffffffffffffffff16817fcf765d6f163c9b0d832e2a94f4c8e9bffd32a2c3ca5fdbb8cc67b5fe1441f41360405160405180910390a350565b5f5ffd5b5f5ffd5b5f5ffd5b5f5ffd5b5f5ffd5b5f5f83601f84011261017c5761017b61015b565b5b8235905067ffffffffffffffff8111156101995761019861015f565b5b6020830191508360018202830111156101b5576101b4610163565b5b9250929050565b5f819050919050565b6101ce816101bc565b81146101d8575f5ffd5b50565b5f813590506101e9816101c5565b92915050565b5f5f5f6040848603121561020657610205610153565b5b5f84013567ffffffffffffffff81111561022357610222610157565b5b61022f86828701610167565b93509350506020610242868287016101db565b9150509250925092565b610255816101bc565b82525050565b5f60208201905061026e5f83018461024c565b92915050565b5f6020828403121561028957610288610153565b5b5f610296848285016101db565b91505092915050565b7f4e487b71000000000000000000000000000000000000000000000000000000005f52601160045260245ffd5b5f6102d6826101bc565b91507fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff82036103085761030761029f565b5b600182019050919050565b5f82825260208201905092915050565b828183375f83830152505050565b5f601f19601f8301169050919050565b5f61034c8385610313565b9350610359838584610323565b61036283610331565b840190509392505050565b5f6060820190508181035f830152610386818688610341565b9050610395602083018561024c565b6103a2604083018461024c565b9594505050505056fea26469706673582212202847d4670012fd8b599a095be94807d434458001a5212164a29cf6b99b4a8e7b64736f6c634300081e0033"
 
+// BYTECODE above is the pre-guard contract kept only for historical compatibility; it is never deployed.
+// Current contract, compiled with Solidity 0.8.30 and optimizer enabled. It enforces
+// non-empty/500-byte posts, valid parents, and one like per wallet at the contract layer.
+const SECURE_BYTECODE = "0x608060405260015f553480156012575f5ffd5b50610442806100205f395ff3fe608060405234801561000f575f5ffd5b506004361061004a575f3560e01c806302c427871461004e5780631252cb481461009057806361b8ce8c146100a5578063725009d3146100bb575b5f5ffd5b61007b61005c3660046102e7565b600160209081525f928352604080842090915290825290205460ff1681565b60405190151581526020015b60405180910390f35b6100a361009e366004610320565b6100ce565b005b6100ad5f5481565b604051908152602001610087565b6100a36100c9366004610392565b6101f2565b5f54826101125760405162461bcd60e51b815260206004820152600d60248201526c115b5c1d1e4818dbdb9d195b9d609a1b60448201526064015b60405180910390fd5b6101f48311156101575760405162461bcd60e51b815260206004820152601060248201526f436f6e74656e7420746f6f206c6f6e6760801b6044820152606401610109565b811561019d5780821061019d5760405162461bcd60e51b815260206004820152600e60248201526d125b9d985b1a59081c185c995b9d60921b6044820152606401610109565b6101a88160016103a9565b5f55604051339082907f9fcb19e60f699236a745fa8a0fc59ec21c36952f3230d3f494e5d3530cdbdb73906101e49088908890889042906103ce565b60405180910390a350505050565b5f8111801561020157505f5481105b61023c5760405162461bcd60e51b815260206004820152600c60248201526b155b9adb9bdddb881c1bdcdd60a21b6044820152606401610109565b5f81815260016020908152604080832033845290915290205460ff16156102955760405162461bcd60e51b815260206004820152600d60248201526c105b1c9958591e481b1a5ad959609a1b6044820152606401610109565b5f818152600160208181526040808420338086529252808420805460ff19169093179092559051909183917fcf765d6f163c9b0d832e2a94f4c8e9bffd32a2c3ca5fdbb8cc67b5fe1441f4139190a350565b5f5f604083850312156102f8575f5ffd5b8235915060208301356001600160a01b0381168114610315575f5ffd5b809150509250929050565b5f5f5f60408486031215610332575f5ffd5b833567ffffffffffffffff811115610348575f5ffd5b8401601f81018613610358575f5ffd5b803567ffffffffffffffff81111561036e575f5ffd5b86602082840101111561037f575f5ffd5b6020918201979096509401359392505050565b5f602082840312156103a2575f5ffd5b5035919050565b808201808211156103c857634e487b7160e01b5f52601160045260245ffd5b92915050565b60608152836060820152838560808301375f608085830101525f6080601f19601f87011683010190508360208301528260408301529594505050505056fea2646970667358221220560275f21868a8909e0a7da68046865d4bfd3bf5fc04aa6352f1435da30a816564736f6c634300081e0033"
+const RUNTIME_BYTES = 0x442
+const SECURE_RUNTIME = `0x${SECURE_BYTECODE.slice(2 + 0x20 * 2, 2 + (0x20 + RUNTIME_BYTES) * 2)}`
+
 const ABI = [
   parseAbiItem("event PostCreated(uint256 indexed id, address indexed author, string content, uint256 parentId, uint256 timestamp)"),
   parseAbiItem("event PostLiked(uint256 indexed postId, address indexed liker)"),
   parseAbiItem("function createPost(string content, uint256 parentId)"),
   parseAbiItem("function likePost(uint256 postId)"),
+  parseAbiItem("function liked(uint256 postId, address liker) view returns (bool)"),
+  parseAbiItem("function nextId() view returns (uint256)"),
 ]
 const POST_EV = ABI[0]
 const LIKE_EV = ABI[1]
 
 const addrEq = (a, b) => a?.toLowerCase() === b?.toLowerCase()
-const postKey = (p) => `${(p.notebook ?? "").toLowerCase()}:${p.id}`
-const likeKey = (notebook, id) => `${(notebook ?? "").toLowerCase()}:${id}`
+const idString = (id) => typeof id === "bigint" ? id.toString() : String(id)
+const isRootPost = (p) => idString(p?.parentId) === "0"
+const postKey = (p) => `${(p.notebook ?? "").toLowerCase()}:${idString(p.id)}`
+const likeKey = (notebook, id) => `${(notebook ?? "").toLowerCase()}:${idString(id)}`
 const postFromArgs = (args, notebook) => ({
-  id: Number(args.id),
+  id: idString(args.id),
   author: args.author,
   content: args.content,
-  parentId: Number(args.parentId),
+  parentId: idString(args.parentId),
   timestamp: Number(args.timestamp),
   notebook: notebook ?? null,
 })
@@ -728,7 +768,12 @@ const migrateToSharedFeed = () => {
 const loadDiscoveredFeeds = () => {
   try {
     const raw = JSON.parse(localStorage.getItem(STORE_DISCOVERED) ?? "[]")
-    return Array.isArray(raw) ? raw.filter((f) => isAddr(f?.address)) : []
+    return Array.isArray(raw)
+      ? raw.filter((f) => isAddr(f?.address)).map((f) => ({
+        address: f.address,
+        block: /^\d+$/.test(String(f.block ?? "")) ? String(f.block) : "0",
+      }))
+      : []
   } catch { return [] }
 }
 
@@ -805,13 +850,19 @@ const feedConfig = () => {
   const q = new URLSearchParams(location.search)
   const urlC = q.get("contract")
   const urlFrom = q.get("from")
+  const shared = localStorage.getItem(STORE_SHARED)
   if (isAddr(urlC)) {
-    return { address: urlC, block: urlFrom && /^\d+$/.test(urlFrom) ? urlFrom : "0", legacy: true }
+    const knownShared = (isAddr(ZETTEL_FEED) && addrEq(urlC, ZETTEL_FEED)) || (isAddr(shared) && addrEq(urlC, shared))
+    const sharedBlock = localStorage.getItem(STORE_SHARED_BLOCK)
+    return {
+      address: urlC,
+      block: urlFrom && /^\d+$/.test(urlFrom) ? urlFrom : (knownShared && /^\d+$/.test(sharedBlock ?? "") ? sharedBlock : "0"),
+      legacy: !knownShared,
+    }
   }
   if (isAddr(ZETTEL_FEED)) {
     return { address: ZETTEL_FEED, block: ZETTEL_FROM_BLOCK, legacy: false }
   }
-  const shared = localStorage.getItem(STORE_SHARED)
   const sharedBlock = localStorage.getItem(STORE_SHARED_BLOCK)
   if (isAddr(shared)) {
     return { address: shared, block: sharedBlock && /^\d+$/.test(sharedBlock) ? sharedBlock : "0", legacy: false }
@@ -850,7 +901,18 @@ const pinContractUrl = (address, block) => {
 }
 
 const short = (a) => `${a.slice(0, 6)}...${a.slice(-4)}`
-const sanitize = (s) => s.replace(/\u0000/g, "").slice(0, MAX)
+const utf8Length = (s) => new TextEncoder().encode(s).length
+const sanitize = (s) => {
+  let out = ""
+  let bytes = 0
+  for (const char of String(s ?? "").replace(/\u0000/g, "")) {
+    const size = utf8Length(char)
+    if (bytes + size > MAX) break
+    out += char
+    bytes += size
+  }
+  return out
+}
 const clean = (s) => sanitize(s).trim()
 const byNew = (a, b) => b.timestamp - a.timestamp
 const byOld = (a, b) => a.timestamp - b.timestamp
@@ -862,12 +924,16 @@ const avatarHue = (a) => {
 }
 const avatarStyle = (a) => ({ background: `hsl(${avatarHue(a)} 28% 42%)` })
 const avatarLetters = (a) => (a ? a.slice(2, 4).toUpperCase() : "??")
-const childrenOf = (posts, parent) =>
-  posts.filter((p) => p.parentId === parent.id && addrEq(p.notebook, parent.notebook)).sort(byOld)
+const childrenOf = (posts, parent, seen = null) =>
+  posts.filter((p) => p.parentId === idString(parent.id)
+    && addrEq(p.notebook, parent.notebook)
+    && (!seen || !seen.has(postKey(p)))).sort(byOld)
 const countDescendants = (posts, parent) => {
   let n = 0
+  const seen = new Set([postKey(parent)])
   const walk = (node) => {
-    for (const c of childrenOf(posts, node)) {
+    for (const c of childrenOf(posts, node, seen)) {
+      seen.add(postKey(c))
       n++
       walk(c)
     }
@@ -879,7 +945,7 @@ const fmtTime = (ts) => new Date(ts * 1000).toLocaleString(undefined, { month: "
 
 // Social timeline: all authors, top-level only, newest first, tie-break by likes & replies.
 const buildSocialFeed = (posts, likes) => posts
-  .filter((p) => !p.parentId && p.content?.trim())
+  .filter((p) => isRootPost(p) && p.content?.trim())
   .map((p) => ({ ...p, replyCount: countDescendants(posts, p) }))
   .sort((a, b) => {
     const dt = b.timestamp - a.timestamp
@@ -901,9 +967,14 @@ const matchesAddr = (addr, q) => {
 const searchAll = (posts, q) => {
   const needle = q.trim().toLowerCase()
   if (!needle) return { users: [], posts: [] }
-  const users = [...new Set(posts.map((p) => p.author))]
-    .filter((addr) => matchesAddr(addr, needle))
-    .map((addr) => ({ addr, count: posts.filter((p) => p.author === addr).length }))
+  const userCounts = new Map()
+  for (const post of posts) {
+    const key = post.author.toLowerCase()
+    const current = userCounts.get(key)
+    userCounts.set(key, { addr: current?.addr ?? post.author, count: (current?.count ?? 0) + 1 })
+  }
+  const users = [...userCounts.values()]
+    .filter(({ addr }) => matchesAddr(addr, needle))
     .sort((a, b) => b.count - a.count)
   const matched = posts.filter((p) => p.content.toLowerCase().includes(needle)).sort(byNew)
   return { users, posts: matched }
@@ -918,10 +989,15 @@ const providerName = (p) => {
   return "Browser wallet"
 }
 
+const safeWalletIcon = (icon) => typeof icon === "string"
+  && (/^https:\/\//i.test(icon) || /^data:image\/(?:png|gif|jpe?g|webp);/i.test(icon))
+  ? icon
+  : ""
+
 const addWallet = (list, seen, provider, info) => {
   if (!provider?.request || seen.has(provider)) return
   seen.add(provider)
-  list.push({ info: { uuid: info.uuid, name: info.name || providerName(provider), icon: info.icon || "" }, provider })
+  list.push({ info: { uuid: info.uuid, name: info.name || providerName(provider), icon: safeWalletIcon(info.icon) }, provider })
 }
 
 async function discoverWallets() {
@@ -961,7 +1037,7 @@ const getProvider = () => {
   return activeProvider
 }
 
-const pub = (rpc) => createPublicClient({ chain: mainnet, transport: http(rpc) })
+const pub = (rpc) => createPublicClient({ chain: mainnet, transport: http(rpc, { timeout: 10_000, retryCount: 0 }) })
 const walletPub = () => createPublicClient({ chain: mainnet, transport: custom(getProvider()) })
 const wallet = (account) => createWalletClient({ chain: mainnet, transport: custom(getProvider()), account })
 
@@ -983,14 +1059,47 @@ async function withRpc(fn) {
   throw last ?? new Error("RPC failed")
 }
 
+const verifiedContracts = new Set()
+async function verifyZettelContract(address) {
+  if (!isAddr(address)) throw new Error("Invalid feed address")
+  const key = address.toLowerCase()
+  if (verifiedContracts.has(key)) return address
+  let sawCode = false
+  let last
+  for (const rpc of RPCS) {
+    try {
+      const code = await pub(rpc).getBytecode({ address })
+      if (code) sawCode = true
+      if (code?.toLowerCase() === SECURE_RUNTIME.toLowerCase()) {
+        verifiedContracts.add(key)
+        return address
+      }
+    } catch (e) { last = e }
+  }
+  if (sawCode) throw new Error("This feed uses an older or unknown contract. For safety, it is read-only.")
+  throw last ?? new Error("Could not verify the feed contract")
+}
+
 async function waitReceipt(hash) {
-  return walletPub().waitForTransactionReceipt({ hash, timeout: 120_000 })
+  return withRpc((rpc) => pub(rpc).waitForTransactionReceipt({ hash, timeout: 120_000 }))
 }
 
 async function ensureContract(account) {
-  const existing = contractAddr()
-  if (existing) return existing
-  const tx = await wallet(account).deployContract({ abi: ABI, bytecode: BYTECODE })
+  const existing = sharedFeedAddress()?.address
+  if (existing) {
+    try {
+      return await verifyZettelContract(existing)
+    } catch (e) {
+      // A locally remembered pre-guard feed can be preserved as read-only while
+      // the next publish creates the safe replacement. Never auto-replace a
+      // committed canonical address; that requires an explicit deployment update.
+      if (isAddr(ZETTEL_FEED) || !String(e?.message ?? "").includes("older or unknown")) throw e
+      saveDiscoveredFeed(existing, localStorage.getItem(STORE_SHARED_BLOCK) ?? "0", account)
+      localStorage.removeItem(STORE_SHARED)
+      localStorage.removeItem(STORE_SHARED_BLOCK)
+    }
+  }
+  const tx = await wallet(account).deployContract({ abi: ABI, bytecode: SECURE_BYTECODE })
   const receipt = await waitReceipt(tx)
   if (!receipt.contractAddress) throw new Error("Deploy failed")
   bootstrapSharedFeed(receipt.contractAddress, receipt.blockNumber)
@@ -1004,57 +1113,6 @@ async function ensureContract(account) {
   return receipt.contractAddress
 }
 
-async function discoverNotebooksFromWallet(wallet) {
-  return withTimeout(discoverNotebooksFromWalletInner(wallet), 12_000, "discovery timeout").catch(() => [])
-}
-
-async function discoverNotebooksFromWalletInner(wallet) {
-  if (!wallet || !activeProvider?.request) return []
-  const w = wallet.toLowerCase()
-  const client = walletPub()
-  const found = new Map()
-  const note = (address, block) => {
-    if (!isAddr(address)) return
-    const a = address.toLowerCase()
-    const b = BigInt(block)
-    const prev = found.has(a) ? BigInt(found.get(a)) : null
-    const use = !prev || b < prev ? b : prev
-    found.set(a, use.toString())
-    saveDiscoveredFeed(address, use.toString(), wallet)
-  }
-  const scanReceipt = async (hash) => {
-    if (!hash) return
-    try {
-      const receipt = await client.getTransactionReceipt({ hash })
-      if (!receipt || receipt.from?.toLowerCase() !== w) return
-      if (receipt.contractAddress) note(receipt.contractAddress, receipt.blockNumber)
-      for (const log of receipt.logs) {
-        try {
-          const ev = decodeEventLog({ abi: [POST_EV], data: log.data, topics: log.topics })
-          if (ev.eventName === "PostCreated") note(log.address, receipt.blockNumber)
-        } catch (_) {}
-      }
-    } catch (_) {}
-  }
-  const scanTxHashes = async (hashes) => {
-    await Promise.all(hashes.slice(0, 30).map((hash) => scanReceipt(hash)))
-  }
-  const [blockscout, etherscan] = await Promise.allSettled([
-    fetch(`https://eth.blockscout.com/api/v2/addresses/${wallet}/transactions?filter=from`).then((r) => r.json()),
-    fetch(`https://api.etherscan.io/api?module=account&action=txlist&address=${wallet}&startblock=0&endblock=99999999&page=1&offset=40&sort=desc`).then((r) => r.json()),
-  ])
-  if (blockscout.status === "fulfilled") {
-    await scanTxHashes((blockscout.value.items ?? []).map((t) => t.hash))
-  }
-  if (etherscan.status === "fulfilled") {
-    const data = etherscan.value
-    if (data.status === "1" && Array.isArray(data.result)) {
-      await scanTxHashes(data.result.map((t) => t.hash))
-    }
-  }
-  return [...found.entries()].map(([address, block]) => ({ address, block }))
-}
-
 async function loadFeed(address, block) {
   const pull = async (from) => {
     const fromBn = BigInt(from)
@@ -1065,12 +1123,16 @@ async function loadFeed(address, block) {
       ])
       const posts = postLogs.map((log) => postFromArgs(log.args, address))
       const likes = new Map()
+      const likedBy = new Map()
       for (const log of likeLogs) {
-        const id = Number(log.args.postId)
+        const id = idString(log.args.postId)
         const key = likeKey(address, id)
-        likes.set(key, (likes.get(key) ?? 0) + 1)
+        const set = likedBy.get(key) ?? new Set()
+        set.add(String(log.args.liker).toLowerCase())
+        likedBy.set(key, set)
       }
-      return { posts, likes }
+      for (const [key, set] of likedBy) likes.set(key, set.size)
+      return { posts, likes, likedBy }
     }
     const attempts = []
     if (activeProvider?.request) {
@@ -1082,37 +1144,45 @@ async function loadFeed(address, block) {
     if (!attempts.length) throw new Error("RPC failed")
     const posts = mergePosts([], attempts.flatMap((a) => a.posts))
     const likes = new Map()
+    const likedBy = new Map()
     for (const a of attempts) {
       for (const [key, n] of a.likes) likes.set(key, Math.max(likes.get(key) ?? 0, n))
+      for (const [key, set] of a.likedBy) {
+        const merged = likedBy.get(key) ?? new Set()
+        for (const liker of set) merged.add(liker)
+        likedBy.set(key, merged)
+        likes.set(key, Math.max(likes.get(key) ?? 0, merged.size))
+      }
     }
-    return { posts, likes }
+    return { posts, likes, likedBy, available: true }
   }
-  let result = await pull(block).catch(() => ({ posts: [], likes: new Map() }))
-  if (!result.posts.length && block !== "0") result = await pull("0").catch(() => result)
+  let result = await pull(block)
+  if (!result.posts.length && block !== "0") {
+    try { result = await pull("0") } catch (_) {}
+  }
   return result
 }
 
 const mergeFeedResults = (acc, r) => {
   acc.posts = mergePosts(acc.posts, r.posts)
   for (const [key, n] of r.likes) acc.likes.set(key, Math.max(acc.likes.get(key) ?? 0, n))
+  for (const [key, set] of r.likedBy) {
+    const merged = acc.likedBy.get(key) ?? new Set()
+    for (const liker of set) merged.add(liker)
+    acc.likedBy.set(key, merged)
+    acc.likes.set(key, Math.max(acc.likes.get(key) ?? 0, merged.size))
+  }
   return acc
 }
 
 async function loadChain() {
   const feeds = feedsToLoad()
-  if (!feeds.length) return { posts: [], likes: new Map() }
-  const empty = { posts: [], likes: new Map() }
-  const primary = sharedFeedAddress()
-  let acc = { posts: [], likes: new Map() }
-  if (primary) {
-    const pf = feeds.find((f) => addrEq(f.address, primary.address))
-    if (pf) acc = mergeFeedResults(acc, await loadFeed(pf.address, pf.block).catch(() => empty))
-  }
-  const rest = feeds.filter((f) => !primary || !addrEq(f.address, primary.address))
-  if (rest.length) {
-    const results = await Promise.all(rest.map((f) => loadFeed(f.address, f.block).catch(() => empty)))
-    for (const r of results) acc = mergeFeedResults(acc, r)
-  }
+  if (!feeds.length) return { posts: [], likes: new Map(), likedBy: new Map(), available: true }
+  const results = await Promise.all(feeds.map((f) => loadFeed(f.address, f.block).catch(() => null)))
+  const available = results.some(Boolean)
+  if (!available) throw new Error("RPC failed")
+  const acc = { posts: [], likes: new Map(), likedBy: new Map(), available: true }
+  for (const result of results) if (result) mergeFeedResults(acc, result)
   return acc
 }
 
@@ -1125,7 +1195,7 @@ async function connectWallet(provider) {
     "Unlock your wallet and approve the connection",
   )
   if (!accounts?.length) throw new Error("No account selected")
-  const chainId = await provider.request({ method: "eth_chainId" })
+  const chainId = String(await provider.request({ method: "eth_chainId" })).toLowerCase()
   if (chainId !== "0x1") {
     try {
       await provider.request({ method: "wallet_switchEthereumChain", params: [{ chainId: "0x1" }] })
@@ -1146,12 +1216,16 @@ async function connectWallet(provider) {
       }
     }
   }
+  const verifiedChainId = String(await provider.request({ method: "eth_chainId" })).toLowerCase()
+  if (verifiedChainId !== "0x1") throw new Error("Switch to Ethereum mainnet in your wallet")
   return accounts[0]
 }
 
 async function createPost(w, text, parent = null) {
-  const parentId = parent ? parent.id : 0
-  const address = parent?.notebook ?? (await ensureContract(w))
+  const parentId = parent ? parent.id : "0"
+  const address = parent?.notebook
+    ? await verifyZettelContract(parent.notebook)
+    : await ensureContract(w)
   const hash = await wallet(w).writeContract({
     address,
     abi: ABI,
@@ -1163,7 +1237,14 @@ async function createPost(w, text, parent = null) {
 }
 
 async function likePost(w, post) {
-  const address = post.notebook ?? (await ensureContract(w))
+  const address = await verifyZettelContract(post.notebook)
+  const alreadyLiked = await withRpc((rpc) => pub(rpc).readContract({
+    address,
+    abi: ABI,
+    functionName: "liked",
+    args: [BigInt(post.id), w],
+  }))
+  if (alreadyLiked) throw new Error("You already liked this post")
   const hash = await wallet(w).writeContract({ address, abi: ABI, functionName: "likePost", args: [BigInt(post.id)] })
   await waitReceipt(hash)
 }
@@ -1180,9 +1261,9 @@ function Brand({ large, onClick }) {
   )
 }
 
-function Btn({ children, onClick, disabled, variant = "ghost", className = "" }) {
+function Btn({ children, onClick, disabled, variant = "ghost", className = "", ...props }) {
   return React.createElement("button", {
-    onClick, disabled,
+    type: "button", onClick, disabled, ...props,
     className: `btn btn-${variant} ${className}`.trim(),
   }, children)
 }
@@ -1195,7 +1276,7 @@ function Editor({ draft, setDraft, onSubmit, busy, label, placeholder, compact }
       onChange: (e) => setDraft(sanitize(e.target.value)),
     }),
     React.createElement("div", { className: "editor-bar" },
-      React.createElement("span", { className: "char-count" }, `${draft.length} / ${MAX}`),
+      React.createElement("span", { className: "char-count" }, `${utf8Length(draft)} / ${MAX} bytes`),
       React.createElement(Btn, {
         variant: "primary",
         className: compact ? "btn-compact" : "",
@@ -1262,9 +1343,9 @@ function UserResult({ addr, count, onOpen }) {
   )
 }
 
-function ActionIcon({ kind }) {
+function ActionIcon({ kind, active = false }) {
   if (kind === "like") {
-    return React.createElement("svg", { width: 15, height: 15, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.8 },
+    return React.createElement("svg", { width: 15, height: 15, viewBox: "0 0 24 24", fill: active ? "currentColor" : "none", stroke: "currentColor", strokeWidth: 1.8 },
       React.createElement("path", { d: "M12 21s-7-4.4-9.5-8.2C.5 9.5 2.2 6 6 6c2 0 3.3 1.2 4 2.2C10.7 7.2 12 6 14 6c3.8 0 5.5 3.5 3.5 6.8C19 16.6 12 21 12 21z" }),
     )
   }
@@ -1273,9 +1354,16 @@ function ActionIcon({ kind }) {
   )
 }
 
-function PostCard({ post, likes, replies, onOpen, onLike, onReply, small, hero }) {
+function PostCard({ post, likes, replies, onOpen, onLike, onReply, small, hero, liked = false, likeBusy = false }) {
   const cls = `card${onOpen ? " card-click" : ""}${small ? " card-sm" : ""}${hero ? " card-hero" : ""}`
-  return React.createElement("article", { className: cls, onClick: onOpen },
+  const openProps = onOpen ? {
+    onClick: onOpen,
+    role: "button",
+    tabIndex: 0,
+    onKeyDown: (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onOpen() } },
+    "aria-label": `Open post by ${short(post.author)}`,
+  } : {}
+  return React.createElement("article", { className: cls, ...openProps },
     React.createElement("div", {
       className: `avatar${small ? " avatar-sm" : ""}`,
       style: avatarStyle(post.author),
@@ -1288,9 +1376,17 @@ function PostCard({ post, likes, replies, onOpen, onLike, onReply, small, hero }
       ),
       React.createElement("p", { className: "content" }, post.content),
       React.createElement("div", { className: "card-actions", onClick: (e) => e.stopPropagation() },
-        React.createElement(Btn, { variant: "like", onClick: onLike },
-          React.createElement(ActionIcon, { kind: "like" }),
-          React.createElement("span", { className: "action-count" }, likes > 0 ? likes : "Like"),
+        React.createElement(Btn, {
+          variant: "like",
+          className: liked ? "liked" : "",
+          onClick: onLike,
+          disabled: liked || likeBusy,
+          "aria-pressed": liked,
+          "aria-label": liked ? "Liked" : "Like",
+          title: liked ? "You already liked this post" : likeBusy ? "Saving like..." : "Like this post",
+        },
+          React.createElement(ActionIcon, { kind: "like", active: liked }),
+          React.createElement("span", { className: "action-count" }, likes > 0 ? likes : liked ? "Liked" : "Like"),
         ),
         onReply && React.createElement(Btn, { variant: "action", onClick: onReply },
           React.createElement(ActionIcon, { kind: "reply" }),
@@ -1301,8 +1397,8 @@ function PostCard({ post, likes, replies, onOpen, onLike, onReply, small, hero }
   )
 }
 
-function CommentTree({ root, posts, likes, depth, onLike, onReply, onOpen }) {
-  const kids = childrenOf(posts, root)
+function CommentTree({ root, posts, likes, depth, onLike, onReply, onOpen, isLiked, isLikeBusy, seen = new Set([postKey(root)]) }) {
+  const kids = childrenOf(posts, root, seen)
   if (!kids.length) return null
   return React.createElement("div", { className: depth === 0 ? "thread" : null },
     kids.map((c) => React.createElement("div", {
@@ -1312,6 +1408,8 @@ function CommentTree({ root, posts, likes, depth, onLike, onReply, onOpen }) {
       React.createElement(PostCard, {
         post: c,
         likes: likes.get(likeKey(c.notebook, c.id)) ?? 0,
+        liked: isLiked(c),
+        likeBusy: isLikeBusy(c),
         replies: countDescendants(posts, c),
         small: true,
         onOpen: () => onOpen(c),
@@ -1319,7 +1417,8 @@ function CommentTree({ root, posts, likes, depth, onLike, onReply, onOpen }) {
         onReply: () => onReply(c),
       }),
       React.createElement(CommentTree, {
-        root: c, posts, likes, depth: depth + 1, onLike, onReply, onOpen,
+        root: c, posts, likes, depth: depth + 1, onLike, onReply, onOpen, isLiked, isLikeBusy,
+        seen: new Set([...seen, postKey(c)]),
       }),
     )),
   )
@@ -1330,6 +1429,9 @@ function App() {
   const [wallets, setWallets] = useState(null)
   const [posts, setPosts] = useState([])
   const [likes, setLikes] = useState(new Map())
+  const [likedBy, setLikedBy] = useState(new Map())
+  const [likePending, setLikePending] = useState(new Set())
+  const likeBusyRef = useRef(new Set())
   const [screen, setScreen] = useState("feed")
   const [postId, setPostId] = useState(null)
   const [draft, setDraft] = useState("")
@@ -1345,20 +1447,20 @@ function App() {
     for (let i = 0; i < 6; i++) {
       try {
         const d = await loadChain()
-        let ok = false
+        const found = !expectKeys.length || expectKeys.every((k) => d.posts.some((p) => postKey(p) === k))
         setPosts((prev) => {
-          const next = applyChainPosts(prev, d.posts)
-          ok = !expectKeys.length || expectKeys.every((k) => next.some((p) => postKey(p) === k))
-          return next
+          return expectKeys.length ? applyChainPosts(prev, d.posts) : d.posts
         })
-        setLikes((prev) => {
+        setLikes((prev) => expectKeys.length ? new Map([...prev, ...d.likes]) : d.likes)
+        setLikedBy((prev) => {
+          if (!expectKeys.length) return d.likedBy
           const next = new Map(prev)
-          for (const [key, n] of d.likes) next.set(key, Math.max(next.get(key) ?? 0, n))
+          for (const [key, set] of d.likedBy) next.set(key, new Set([...(next.get(key) ?? []), ...set]))
           return next
         })
         setErr(null)
         setFeedLoading(false)
-        if (ok) return
+        if (found) return
       } catch {
         if (i === 5) {
           setErr("Could not read chain — posts are still on chain, try refreshing")
@@ -1378,6 +1480,38 @@ function App() {
   useEffect(() => {
     void discoverWallets().then(setWallets)
   }, [])
+
+  useEffect(() => {
+    const provider = activeProvider
+    if (!walletAddr || !provider?.on) return undefined
+    const resetSession = (message = null) => {
+      activeProvider = null
+      likeBusyRef.current.clear()
+      setWalletAddr(null)
+      setLikedBy(new Map())
+      setLikePending(new Set())
+      setErr(message)
+    }
+    const onAccountsChanged = (accounts) => {
+      const next = accounts?.[0]
+      if (!next) resetSession("Wallet disconnected")
+      else if (!addrEq(next, walletAddr)) resetSession("Wallet account changed. Reconnect to continue safely.")
+    }
+    const onChainChanged = (chainId) => {
+      if (String(chainId).toLowerCase() !== "0x1") resetSession("Switch back to Ethereum mainnet to continue")
+    }
+    provider.on("accountsChanged", onAccountsChanged)
+    provider.on("chainChanged", onChainChanged)
+    return () => {
+      if (provider.removeListener) {
+        provider.removeListener("accountsChanged", onAccountsChanged)
+        provider.removeListener("chainChanged", onChainChanged)
+      } else if (provider.off) {
+        provider.off("accountsChanged", onAccountsChanged)
+        provider.off("chainChanged", onChainChanged)
+      }
+    }
+  }, [walletAddr])
 
   const submit = useCallback(async (parent = null) => {
     if (!walletAddr) return
@@ -1404,14 +1538,8 @@ function App() {
     try {
       const addr = await connectWallet(provider)
       setWalletAddr(addr)
-      await refresh()
-      void (async () => {
-        setSyncing(true)
-        try {
-          await discoverNotebooksFromWallet(addr)
-          await refresh()
-        } finally { setSyncing(false) }
-      })()
+      setSyncing(true)
+      try { await refresh() } finally { setSyncing(false) }
     } catch (e) {
       activeProvider = null
       setErr(errMsg(e))
@@ -1422,21 +1550,48 @@ function App() {
   const post = useMemo(() => posts.find((p) => postKey(p) === postId), [posts, postId])
   const threadCount = useMemo(() => post ? countDescendants(posts, post) : 0, [posts, post])
   const mine = useMemo(() => walletAddr
-    ? posts.filter((p) => addrEq(p.author, walletAddr) && !p.parentId).sort(byNew)
+    ? posts.filter((p) => addrEq(p.author, walletAddr) && isRootPost(p)).sort(byNew)
     : [], [posts, walletAddr])
   const search = useMemo(() => searchAll(posts, query), [posts, query])
   const userPosts = useMemo(() => viewAddr
-    ? posts.filter((p) => addrEq(p.author, viewAddr) && !p.parentId).sort(byNew)
+    ? posts.filter((p) => addrEq(p.author, viewAddr) && isRootPost(p)).sort(byNew)
     : [], [posts, viewAddr])
   const searching = query.trim().length > 0
 
   const legacy = useMemo(() => legacyNotebook(walletAddr), [walletAddr])
 
-  const doLike = (p) => void likePost(walletAddr, p).then(refresh).catch(() => setErr("Transaction failed"))
+  const isLiked = useCallback((p) => !!walletAddr && !!likedBy.get(likeKey(p.notebook, p.id))?.has(walletAddr.toLowerCase()), [walletAddr, likedBy])
+  const isLikeBusy = useCallback((p) => likePending.has(likeKey(p.notebook, p.id)), [likePending])
+  const doLike = useCallback(async (p) => {
+    if (!walletAddr) return setErr("Connect a wallet to like posts")
+    if (busy) return setErr("Finish the current wallet transaction first")
+    const key = likeKey(p.notebook, p.id)
+    if (isLiked(p)) return setErr("You already liked this post")
+    if (likeBusyRef.current.has(key)) return
+    likeBusyRef.current.add(key)
+    setLikePending((prev) => new Set(prev).add(key))
+    try {
+      await likePost(walletAddr, p)
+      setLikedBy((prev) => {
+        const next = new Map(prev)
+        next.set(key, new Set([...(next.get(key) ?? []), walletAddr.toLowerCase()]))
+        return next
+      })
+      await refresh()
+    } catch (e) { setErr(errMsg(e)) }
+    finally {
+      likeBusyRef.current.delete(key)
+      setLikePending((prev) => {
+        const next = new Set(prev)
+        next.delete(key)
+        return next
+      })
+    }
+  }, [walletAddr, busy, isLiked, refresh])
   const findRoot = (node) => {
     let cur = node
     const seen = new Set()
-    while (cur?.parentId && !seen.has(postKey(cur))) {
+    while (cur && !isRootPost(cur) && !seen.has(postKey(cur))) {
       seen.add(postKey(cur))
       const parent = posts.find((x) => x.id === cur.parentId && addrEq(x.notebook, cur.notebook))
       if (!parent) break
@@ -1460,7 +1615,6 @@ function App() {
     setSyncing(true)
     setErr(null)
     try {
-      await discoverNotebooksFromWallet(walletAddr)
       await refresh()
     } catch (e) { setErr(errMsg(e)) }
     finally { setSyncing(false) }
@@ -1512,6 +1666,7 @@ function App() {
   const postResults = (list, clickable = true) => list.map((p) => React.createElement(PostCard, {
     key: postKey(p), post: p, likes: likes.get(likeKey(p.notebook, p.id)) ?? 0,
     replies: p.replyCount ?? countDescendants(posts, p),
+    liked: isLiked(p), likeBusy: isLikeBusy(p),
     onOpen: clickable ? () => openPost(p) : undefined,
     onLike: () => doLike(p),
     onReply: () => startReply(p),
@@ -1533,7 +1688,16 @@ function App() {
             React.createElement(Btn, {
               variant: "ghost",
               className: "btn-xs",
-              onClick: () => { activeProvider = null; setWalletAddr(null); setScreen("feed"); setQuery(""); setReplyTo(null) },
+              onClick: () => {
+                activeProvider = null
+                likeBusyRef.current.clear()
+                setWalletAddr(null)
+                setLikedBy(new Map())
+                setLikePending(new Set())
+                setScreen("feed")
+                setQuery("")
+                setReplyTo(null)
+              },
             }, "Leave"),
           ),
         ),
@@ -1562,7 +1726,7 @@ function App() {
           ? React.createElement("p", { className: "empty" }, "Loading feed…")
           : feed.length
           ? React.createElement("div", { className: "feed-list" },
-            syncing && React.createElement("p", { className: "sync-hint" }, "Checking for older notebooks…"),
+            syncing && React.createElement("p", { className: "sync-hint" }, "Refreshing feed…"),
             postResults(feed),
           )
           : React.createElement("p", { className: "empty" }, contractAddr() || feedsToLoad().length
@@ -1578,6 +1742,7 @@ function App() {
           React.createElement(PostCard, {
             post, hero: true,
             likes: likes.get(likeKey(post.notebook, post.id)) ?? 0,
+            liked: isLiked(post), likeBusy: isLikeBusy(post),
             replies: threadCount,
             onLike: () => doLike(post),
             onReply: () => setReplyTo(null),
@@ -1589,6 +1754,8 @@ function App() {
             onLike: doLike,
             onReply: startReply,
             onOpen: openPost,
+            isLiked,
+            isLikeBusy,
           }),
           React.createElement("div", { className: "reply-composer" },
             replyTo && React.createElement("div", { className: "reply-target" },
@@ -1622,7 +1789,7 @@ function App() {
             className: "btn-sm",
             onClick: () => void resync(),
             disabled: syncing,
-          }, syncing ? "Searching chain…" : "Find my posts on chain"),
+          }, syncing ? "Refreshing feed…" : "Refresh my posts"),
           contractAddr() && !isLegacyFeed() && React.createElement("p", { className: "section-sub" },
             `Shared feed ${short(contractAddr())} — permanent on Ethereum, any frontend can load it.`),
           legacy && React.createElement("p", { className: "section-sub" },
@@ -1636,6 +1803,7 @@ function App() {
             ? React.createElement("div", { className: "feed-list" },
               mine.map((p) => React.createElement(PostCard, {
                 key: postKey(p), post: p, likes: likes.get(likeKey(p.notebook, p.id)) ?? 0,
+                liked: isLiked(p), likeBusy: isLikeBusy(p),
                 replies: countDescendants(posts, p), small: true,
                 onOpen: () => openPost(p),
                 onLike: () => doLike(p),
@@ -1653,6 +1821,7 @@ function App() {
             ? React.createElement("div", { className: "feed-list" },
               userPosts.map((p) => React.createElement(PostCard, {
                 key: postKey(p), post: p, likes: likes.get(likeKey(p.notebook, p.id)) ?? 0,
+                liked: isLiked(p), likeBusy: isLikeBusy(p),
                 replies: countDescendants(posts, p), small: true,
                 onOpen: () => openPost(p),
                 onLike: () => doLike(p),
