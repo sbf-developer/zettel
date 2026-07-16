@@ -18,15 +18,20 @@ Everything lives in one file: `app.tsx`.
 npx tsx app.tsx
 ```
 
-Open [http://localhost:5173](http://localhost:5173), connect your wallet, and start writing.
+Open [http://localhost:5173](http://localhost:5173). Reading the feed comes from Ethereum; a wallet is only needed to publish, reply, or like.
 
-You need MetaMask (or another wallet) on **Ethereum mainnet**. The first post deploys the shared Zettel feed contract. That step requires a one-time gas fee.
+You need MetaMask (or another wallet) on **Ethereum mainnet** for write actions. The maintainer deploys the secure shared feed contract once and pays its one-time deployment gas fee.
 
-Before launch, deploy once, then put the resulting address and deployment block into `ZETTEL_FEED` and `ZETTEL_FROM_BLOCK` in `app.tsx` and publish that version. Those constants are what let a fresh frontend instance rediscover the same feed after local storage, the domain, or the original frontend disappears.
+Before launch, put the deployed contract address and deployment block into `ZETTEL_FEED` and `ZETTEL_FROM_BLOCK` in `app.tsx`, then publish that version. Those constants are the permanent feed locator: every frontend reads the same contract events directly from Ethereum. Local storage and the domain are never part of feed discovery. If the constants are empty, publishing is disabled rather than creating a private per-user feed.
+
+For a new deployment, open `http://localhost:5173/?setup=1`, connect the maintainer wallet, open Write, and click **Deploy canonical feed** once. Copy the displayed address and block into `app.tsx`, then restart and publish the resulting build. The temporary in-session feed is not a production locator until those constants are committed.
+
+An older feed can be inspected explicitly with `?contract=0x...&from=...`; recovery URLs are read-only and never replace the canonical feed.
 
 ## Features
 
-- Connect wallet and browse a shared feed
+- Browse the shared on-chain feed without a wallet
+- Connect a wallet only for write actions
 - Publish notes up to 500 UTF-8 bytes
 - Reply to posts and like notes once per wallet per post
 - View your on-chain profile

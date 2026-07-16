@@ -689,18 +689,24 @@ const RPCS = [
   "https://eth.drpc.org",
 ]
 const POLL_MS = 30_000
+// The contract address and deployment block are the permanent application root.
+// Deploy the secure contract once and commit these values to every frontend build.
+// Local storage is migration-only; it must never select the production feed.
 // Canonical Zettel feed — baked into source so any frontend instance loads the same chain data.
-// After first deploy, paste address + block here and commit.
+// Deploy once and paste the address + block here before publishing.
 const ZETTEL_FEED = ""
 const ZETTEL_FROM_BLOCK = "0"
-const STORE_SHARED = "zettel-shared-feed"
-const STORE_SHARED_BLOCK = "zettel-shared-from-block"
 const STORE_CONTRACT = "zettel-contract"
 const STORE_BLOCK = "zettel-from-block"
-const STORE_DISCOVERED = "zettel-discovered-feeds"
 const walletContractKey = (w) => `zettel-contract-${w.toLowerCase()}`
 const walletBlockKey = (w) => `zettel-from-block-${w.toLowerCase()}`
 const isAddr = (a) => typeof a === "string" && /^0x[a-fA-F0-9]{40}$/.test(a) && !/^0x0{40}$/i.test(a)
+const canonicalFeedConfigured = () => isAddr(ZETTEL_FEED) && /^\d+$/.test(String(ZETTEL_FROM_BLOCK))
+let sessionFeed = null
+const setupMode = () => new URLSearchParams(location.search).get("setup") === "1"
+const configuredFeed = () => canonicalFeedConfigured()
+  ? { address: ZETTEL_FEED, block: ZETTEL_FROM_BLOCK }
+  : sessionFeed
 const BYTECODE = "0x608060405260015f553480156012575f5ffd5b506103e1806100205f395ff3fe608060405234801561000f575f5ffd5b506004361061003f575f3560e01c80631252cb481461004357806361b8ce8c1461005f578063725009d31461007d575b5f5ffd5b61005d600480360381019061005891906101ef565b610099565b005b610067610107565b604051610074919061025b565b60405180910390f35b61009760048036038101906100929190610274565b61010c565b005b3373ffffffffffffffffffffffffffffffffffffffff165f5f8154809291906100c1906102cc565b919050557f9fcb19e60f699236a745fa8a0fc59ec21c36952f3230d3f494e5d3530cdbdb73858585426040516100fa949392919061036d565b60405180910390a3505050565b5f5481565b3373ffffffffffffffffffffffffffffffffffffffff16817fcf765d6f163c9b0d832e2a94f4c8e9bffd32a2c3ca5fdbb8cc67b5fe1441f41360405160405180910390a350565b5f5ffd5b5f5ffd5b5f5ffd5b5f5ffd5b5f5ffd5b5f5f83601f84011261017c5761017b61015b565b5b8235905067ffffffffffffffff8111156101995761019861015f565b5b6020830191508360018202830111156101b5576101b4610163565b5b9250929050565b5f819050919050565b6101ce816101bc565b81146101d8575f5ffd5b50565b5f813590506101e9816101c5565b92915050565b5f5f5f6040848603121561020657610205610153565b5b5f84013567ffffffffffffffff81111561022357610222610157565b5b61022f86828701610167565b93509350506020610242868287016101db565b9150509250925092565b610255816101bc565b82525050565b5f60208201905061026e5f83018461024c565b92915050565b5f6020828403121561028957610288610153565b5b5f610296848285016101db565b91505092915050565b7f4e487b71000000000000000000000000000000000000000000000000000000005f52601160045260245ffd5b5f6102d6826101bc565b91507fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff82036103085761030761029f565b5b600182019050919050565b5f82825260208201905092915050565b828183375f83830152505050565b5f601f19601f8301169050919050565b5f61034c8385610313565b9350610359838584610323565b61036283610331565b840190509392505050565b5f6060820190508181035f830152610386818688610341565b9050610395602083018561024c565b6103a2604083018461024c565b9594505050505056fea26469706673582212202847d4670012fd8b599a095be94807d434458001a5212164a29cf6b99b4a8e7b64736f6c634300081e0033"
 
 // BYTECODE above is the pre-guard contract kept only for historical compatibility; it is never deployed.
@@ -754,76 +760,8 @@ const applyChainPosts = (prev, chain) => {
   return mergePosts(prev, chain)
 }
 
-const migrateToSharedFeed = () => {
-  if (isAddr(ZETTEL_FEED) || isAddr(localStorage.getItem(STORE_SHARED))) return
-  for (const { address, block } of collectStoredFeeds()) {
-    if (isAddr(address)) {
-      localStorage.setItem(STORE_SHARED, address)
-      localStorage.setItem(STORE_SHARED_BLOCK, block)
-      return
-    }
-  }
-}
-
-const loadDiscoveredFeeds = () => {
-  try {
-    const raw = JSON.parse(localStorage.getItem(STORE_DISCOVERED) ?? "[]")
-    return Array.isArray(raw)
-      ? raw.filter((f) => isAddr(f?.address)).map((f) => ({
-        address: f.address,
-        block: /^\d+$/.test(String(f.block ?? "")) ? String(f.block) : "0",
-      }))
-      : []
-  } catch { return [] }
-}
-
-const saveDiscoveredFeed = (address, block, wallet) => {
-  const blockStr = String(block)
-  const list = loadDiscoveredFeeds()
-  const i = list.findIndex((f) => addrEq(f.address, address))
-  if (i >= 0) {
-    if (BigInt(blockStr) < BigInt(list[i].block)) list[i].block = blockStr
-  } else {
-    list.push({ address, block: blockStr })
-  }
-  localStorage.setItem(STORE_DISCOVERED, JSON.stringify(list))
-  if (!isAddr(localStorage.getItem(STORE_SHARED))) {
-    localStorage.setItem(STORE_SHARED, address)
-    localStorage.setItem(STORE_SHARED_BLOCK, blockStr)
-  }
-  if (wallet) {
-    localStorage.setItem(walletContractKey(wallet), address)
-    localStorage.setItem(walletBlockKey(wallet), blockStr)
-  }
-}
-
-const collectStoredFeeds = () => {
-  const seen = new Set()
-  const out = []
-  const add = (address, block) => {
-    const a = address?.toLowerCase?.()
-    if (!isAddr(address) || seen.has(a)) return
-    seen.add(a)
-    out.push({ address, block: block && /^\d+$/.test(block) ? block : "0" })
-  }
-  for (const f of loadDiscoveredFeeds()) add(f.address, f.block)
-  add(localStorage.getItem(STORE_SHARED), localStorage.getItem(STORE_SHARED_BLOCK))
-  add(localStorage.getItem(STORE_CONTRACT), localStorage.getItem(STORE_BLOCK))
-  for (let i = 0; i < localStorage.length; i++) {
-    const key = localStorage.key(i)
-    if (!key?.startsWith("zettel-contract-0x")) continue
-    const wallet = key.slice("zettel-contract-".length)
-    add(localStorage.getItem(key), localStorage.getItem(walletBlockKey(wallet)))
-  }
-  return out
-}
-
 const sharedFeedAddress = () => {
-  if (isAddr(ZETTEL_FEED)) return { address: ZETTEL_FEED, block: ZETTEL_FROM_BLOCK }
-  const shared = localStorage.getItem(STORE_SHARED)
-  const block = localStorage.getItem(STORE_SHARED_BLOCK)
-  if (isAddr(shared)) return { address: shared, block: block && /^\d+$/.test(block) ? block : "0" }
-  return null
+  return configuredFeed()
 }
 
 const feedsToLoad = () => {
@@ -841,44 +779,29 @@ const feedsToLoad = () => {
   }
   const primary = sharedFeedAddress()
   if (primary) add(primary.address, primary.block)
-  for (const f of collectStoredFeeds()) add(f.address, f.block)
   return out
 }
-migrateToSharedFeed()
 
 const feedConfig = () => {
   const q = new URLSearchParams(location.search)
   const urlC = q.get("contract")
   const urlFrom = q.get("from")
-  const shared = localStorage.getItem(STORE_SHARED)
   if (isAddr(urlC)) {
-    const knownShared = (isAddr(ZETTEL_FEED) && addrEq(urlC, ZETTEL_FEED)) || (isAddr(shared) && addrEq(urlC, shared))
-    const sharedBlock = localStorage.getItem(STORE_SHARED_BLOCK)
     return {
       address: urlC,
-      block: urlFrom && /^\d+$/.test(urlFrom) ? urlFrom : (knownShared && /^\d+$/.test(sharedBlock ?? "") ? sharedBlock : "0"),
-      legacy: !knownShared,
+      block: urlFrom && /^\d+$/.test(urlFrom) ? urlFrom : "0",
+      legacy: true,
     }
   }
-  if (isAddr(ZETTEL_FEED)) {
-    return { address: ZETTEL_FEED, block: ZETTEL_FROM_BLOCK, legacy: false }
-  }
-  const sharedBlock = localStorage.getItem(STORE_SHARED_BLOCK)
-  if (isAddr(shared)) {
-    return { address: shared, block: sharedBlock && /^\d+$/.test(sharedBlock) ? sharedBlock : "0", legacy: false }
+  const shared = configuredFeed()
+  if (shared) {
+    return { address: shared.address, block: shared.block, legacy: false }
   }
   return null
 }
 const contractAddr = () => feedConfig()?.address ?? null
 const fromBlock = () => BigInt(feedConfig()?.block ?? "0")
 const isLegacyFeed = () => !!feedConfig()?.legacy
-
-const bootstrapSharedFeed = (address, block) => {
-  const blockStr = block.toString()
-  localStorage.setItem(STORE_SHARED, address)
-  localStorage.setItem(STORE_SHARED_BLOCK, blockStr)
-  pinContractUrl(address, blockStr)
-}
 
 const legacyNotebook = (wallet) => {
   if (!wallet) return null
@@ -893,13 +816,6 @@ const legacyNotebook = (wallet) => {
   }
   return null
 }
-const pinContractUrl = (address, block) => {
-  const q = new URLSearchParams(location.search)
-  q.set("contract", address)
-  q.set("from", block.toString())
-  history.replaceState({}, "", `${location.pathname}?${q}`)
-}
-
 const short = (a) => `${a.slice(0, 6)}...${a.slice(-4)}`
 const utf8Length = (s) => new TextEncoder().encode(s).length
 const sanitize = (s) => {
@@ -1084,33 +1000,23 @@ async function waitReceipt(hash) {
   return withRpc((rpc) => pub(rpc).waitForTransactionReceipt({ hash, timeout: 120_000 }))
 }
 
-async function ensureContract(account) {
-  const existing = sharedFeedAddress()?.address
-  if (existing) {
-    try {
-      return await verifyZettelContract(existing)
-    } catch (e) {
-      // A locally remembered pre-guard feed can be preserved as read-only while
-      // the next publish creates the safe replacement. Never auto-replace a
-      // committed canonical address; that requires an explicit deployment update.
-      if (isAddr(ZETTEL_FEED) || !String(e?.message ?? "").includes("older or unknown")) throw e
-      saveDiscoveredFeed(existing, localStorage.getItem(STORE_SHARED_BLOCK) ?? "0", account)
-      localStorage.removeItem(STORE_SHARED)
-      localStorage.removeItem(STORE_SHARED_BLOCK)
-    }
+async function deploySharedFeed(account) {
+  if (canonicalFeedConfigured()) throw new Error("The canonical feed is already configured")
+  const hash = await wallet(account).deployContract({ abi: ABI, bytecode: SECURE_BYTECODE })
+  const receipt = await waitReceipt(hash)
+  if (!receipt.contractAddress) throw new Error("Feed deployment did not return a contract address")
+  return { address: receipt.contractAddress, block: receipt.blockNumber.toString() }
+}
+
+async function ensureContract() {
+  const config = feedConfig()
+  if (!config?.address) {
+    throw new Error("The shared feed is not configured. Deploy it once, then set ZETTEL_FEED in app.tsx.")
   }
-  const tx = await wallet(account).deployContract({ abi: ABI, bytecode: SECURE_BYTECODE })
-  const receipt = await waitReceipt(tx)
-  if (!receipt.contractAddress) throw new Error("Deploy failed")
-  bootstrapSharedFeed(receipt.contractAddress, receipt.blockNumber)
-  console.warn(
-    "Zettel shared feed deployed:",
-    receipt.contractAddress,
-    "from block",
-    receipt.blockNumber.toString(),
-    "— add to ZETTEL_FEED in app.tsx",
-  )
-  return receipt.contractAddress
+  if (config.legacy) {
+    throw new Error("This is a legacy feed and is read-only. Remove the recovery URL before publishing.")
+  }
+  return verifyZettelContract(config.address)
 }
 
 async function loadFeed(address, block) {
@@ -1225,7 +1131,7 @@ async function createPost(w, text, parent = null) {
   const parentId = parent ? parent.id : "0"
   const address = parent?.notebook
     ? await verifyZettelContract(parent.notebook)
-    : await ensureContract(w)
+    : await ensureContract()
   const hash = await wallet(w).writeContract({
     address,
     abi: ABI,
@@ -1268,7 +1174,7 @@ function Btn({ children, onClick, disabled, variant = "ghost", className = "", .
   }, children)
 }
 
-function Editor({ draft, setDraft, onSubmit, busy, label, placeholder, compact }) {
+function Editor({ draft, setDraft, onSubmit, busy, label, placeholder, compact, disabled = false }) {
   return React.createElement("div", { className: `editor${compact ? " editor-compact" : ""}` },
     React.createElement("textarea", {
       className: "textarea", value: draft, maxLength: MAX, rows: compact ? 3 : 4,
@@ -1281,7 +1187,7 @@ function Editor({ draft, setDraft, onSubmit, busy, label, placeholder, compact }
         variant: "primary",
         className: compact ? "btn-compact" : "",
         onClick: onSubmit,
-        disabled: busy || !draft.trim(),
+        disabled: disabled || busy || !draft.trim(),
       }, busy ? "Confirm in wallet..." : label),
     ),
   )
@@ -1438,10 +1344,12 @@ function App() {
   const [query, setQuery] = useState("")
   const [viewAddr, setViewAddr] = useState(null)
   const [err, setErr] = useState(null)
+  const [notice, setNotice] = useState(null)
   const [busy, setBusy] = useState(false)
   const [syncing, setSyncing] = useState(false)
   const [feedLoading, setFeedLoading] = useState(true)
   const [replyTo, setReplyTo] = useState(null)
+  const [, rerenderFeed] = useState(0)
 
   const refresh = useCallback(async (expectKeys = []) => {
     for (let i = 0; i < 6; i++) {
@@ -1514,7 +1422,7 @@ function App() {
   }, [walletAddr])
 
   const submit = useCallback(async (parent = null) => {
-    if (!walletAddr) return
+    if (!walletAddr) return setErr("Connect a wallet to publish or reply")
     const text = clean(draft)
     if (!text) return setErr("Post cannot be empty")
     if (parent && !posts.some((p) => p.id === parent.id && addrEq(p.notebook, parent.notebook))) {
@@ -1546,6 +1454,21 @@ function App() {
     } finally { setBusy(false) }
   }, [refresh])
 
+  const setupFeed = useCallback(async () => {
+    if (canonicalFeedConfigured() || sessionFeed) return setErr("The feed is already configured")
+    if (!walletAddr) return setErr("Connect the maintainer wallet to deploy the canonical feed")
+    setBusy(true)
+    setErr(null)
+    setNotice(null)
+    try {
+      sessionFeed = await deploySharedFeed(walletAddr)
+      rerenderFeed((n) => n + 1)
+      await refresh()
+      setNotice(`Feed deployed at ${sessionFeed.address}. Add this address and block ${sessionFeed.block} to ZETTEL_FEED and ZETTEL_FROM_BLOCK, then republish.`)
+    } catch (e) { setErr(errMsg(e)) }
+    finally { setBusy(false) }
+  }, [walletAddr, refresh])
+
   const feed = useMemo(() => buildSocialFeed(posts, likes), [posts, likes])
   const post = useMemo(() => posts.find((p) => postKey(p) === postId), [posts, postId])
   const threadCount = useMemo(() => post ? countDescendants(posts, post) : 0, [posts, post])
@@ -1557,6 +1480,7 @@ function App() {
     ? posts.filter((p) => addrEq(p.author, viewAddr) && isRootPost(p)).sort(byNew)
     : [], [posts, viewAddr])
   const searching = query.trim().length > 0
+  const activeFeed = feedConfig()
 
   const legacy = useMemo(() => legacyNotebook(walletAddr), [walletAddr])
 
@@ -1620,49 +1544,6 @@ function App() {
     finally { setSyncing(false) }
   }, [walletAddr, refresh])
 
-  if (!walletAddr) {
-    return React.createElement("div", { className: "landing" },
-      React.createElement("div", { className: "landing-inner" },
-        React.createElement(Brand, { large: true }),
-        React.createElement("p", { className: "tagline" }, "Atomic notes on chain. Linked permanently."),
-        err && React.createElement("p", { className: "error" }, err),
-        err && React.createElement("div", { className: "wallet-help" },
-          React.createElement("ol", null,
-            React.createElement("li", null, "Unlock your wallet first, then choose it below."),
-            React.createElement("li", null, "Approve the connection when your wallet asks."),
-            React.createElement("li", null, "If a side panel hangs, open the wallet from its extension icon."),
-          ),
-        ),
-        wallets === null && React.createElement("div", { className: "landing-actions" },
-          React.createElement("button", { type: "button", className: "btn-connect", disabled: true }, "Looking for wallets…"),
-        ),
-        wallets?.length === 0 && React.createElement("div", { className: "landing-actions" },
-          React.createElement("button", { type: "button", className: "btn-connect", disabled: true }, "No wallet found"),
-        ),
-        wallets?.length === 1 && React.createElement("div", { className: "landing-actions" },
-          React.createElement("button", {
-            type: "button",
-            className: "btn-connect",
-            onClick: () => void connect(wallets[0].provider),
-            disabled: busy,
-          }, busy ? "Confirm in wallet…" : "Connect wallet"),
-        ),
-        wallets && wallets.length > 1 && React.createElement("div", { className: "wallet-list" },
-          wallets.map((w) => React.createElement("button", {
-            key: w.info.uuid,
-            type: "button",
-            className: "wallet-btn",
-            disabled: busy,
-            onClick: () => void connect(w.provider),
-          },
-            w.info.icon && React.createElement("img", { src: w.info.icon, alt: "" }),
-            React.createElement("span", null, busy ? "Confirm in wallet…" : w.info.name),
-          )),
-        ),
-      ),
-    )
-  }
-
   const postResults = (list, clickable = true) => list.map((p) => React.createElement(PostCard, {
     key: postKey(p), post: p, likes: likes.get(likeKey(p.notebook, p.id)) ?? 0,
     replies: p.replyCount ?? countDescendants(posts, p),
@@ -1684,21 +1565,40 @@ function App() {
         React.createElement("div", { className: "topbar-right" },
           React.createElement(SearchBar, { value: query, onChange: setQuery }),
           React.createElement("div", { className: "topbar-account" },
-            React.createElement("span", { className: "wallet-addr" }, short(walletAddr)),
-            React.createElement(Btn, {
-              variant: "ghost",
-              className: "btn-xs",
-              onClick: () => {
-                activeProvider = null
-                likeBusyRef.current.clear()
-                setWalletAddr(null)
-                setLikedBy(new Map())
-                setLikePending(new Set())
-                setScreen("feed")
-                setQuery("")
-                setReplyTo(null)
-              },
-            }, "Leave"),
+            walletAddr
+              ? React.createElement(React.Fragment, null,
+                React.createElement("span", { className: "wallet-addr" }, short(walletAddr)),
+                React.createElement(Btn, {
+                  variant: "ghost",
+                  className: "btn-xs",
+                  onClick: () => {
+                    activeProvider = null
+                    likeBusyRef.current.clear()
+                    setWalletAddr(null)
+                    setLikedBy(new Map())
+                    setLikePending(new Set())
+                    setScreen("feed")
+                    setQuery("")
+                    setReplyTo(null)
+                  },
+                }, "Leave"),
+              )
+              : wallets?.length > 1
+              ? wallets.map((w) => React.createElement(Btn, {
+                key: w.info.uuid,
+                variant: "ghost",
+                className: "btn-xs",
+                onClick: () => void connect(w.provider),
+                disabled: busy,
+              }, w.info.name))
+              : React.createElement(Btn, {
+                variant: "ghost",
+                className: "btn-xs",
+                onClick: () => wallets?.length === 1
+                  ? void connect(wallets[0].provider)
+                  : setErr(wallets === null ? "Looking for wallets..." : "Install an Ethereum wallet to publish"),
+                disabled: busy || wallets === null || wallets?.length === 0,
+              }, wallets?.length === 1 ? "Connect" : wallets === null ? "Finding wallet..." : "No wallet"),
           ),
         ),
       ),
@@ -1706,6 +1606,7 @@ function App() {
     React.createElement("main", { className: "main" },
       React.createElement("div", { className: "main-inner" },
         err && React.createElement("p", { className: "error" }, err),
+        notice && React.createElement("p", { className: "sync-hint" }, notice),
 
         searching && React.createElement("section", null,
           !search.users.length && !search.posts.length
@@ -1729,13 +1630,15 @@ function App() {
             syncing && React.createElement("p", { className: "sync-hint" }, "Refreshing feed…"),
             postResults(feed),
           )
-          : React.createElement("p", { className: "empty" }, contractAddr() || feedsToLoad().length
+          : React.createElement("p", { className: "empty" }, !activeFeed
+            ? "The shared feed is not configured yet. Set ZETTEL_FEED and ZETTEL_FROM_BLOCK in app.tsx."
+            : contractAddr() || feedsToLoad().length
             ? (isLegacyFeed()
               ? "Viewing a legacy notebook. Remove ?contract= from the URL for the shared Zettel feed."
               : syncing
               ? "Loading feed…"
               : "No posts yet. Everyone reads the same on-chain feed — publish from Write.")
-            : "No posts yet. Connect wallet and publish — first post creates the shared feed for everyone.")),
+            : "No posts yet. The canonical on-chain feed is ready for publishing.")),
 
         !searching && screen === "post" && post && React.createElement("section", { className: "post-view" },
           React.createElement(Btn, { variant: "ghost", className: "back btn-sm", onClick: () => goScreen("feed") }, "← Feed"),
@@ -1776,13 +1679,25 @@ function App() {
         ),
 
         !searching && screen === "compose" && React.createElement(React.Fragment, null,
-          !contractAddr() && React.createElement("p", { className: "section-sub" },
-            "First post deploys the shared Zettel feed for everyone (one-time gas fee)."),
-          React.createElement(Editor, { draft, setDraft, onSubmit: () => void submit(null), busy, label: "Publish" }),
+          !activeFeed && React.createElement("p", { className: "section-sub" },
+            "Publishing is disabled until the maintainer configures the canonical feed contract."),
+          sessionFeed && !canonicalFeedConfigured() && React.createElement("p", { className: "section-sub" },
+            `This session feed is temporary. Commit ${sessionFeed.address} and block ${sessionFeed.block} to app.tsx before sharing the frontend.`),
+          isLegacyFeed() && React.createElement("p", { className: "section-sub" },
+            "This recovery feed is read-only. Remove the recovery URL to use the canonical feed."),
+          setupMode() && !activeFeed && React.createElement(Btn, {
+            variant: "primary",
+            onClick: () => void setupFeed(),
+            disabled: busy || !walletAddr,
+          }, busy ? "Confirm in wallet…" : walletAddr ? "Deploy canonical feed" : "Connect maintainer wallet first"),
+          React.createElement(Editor, {
+            draft, setDraft, onSubmit: () => void submit(null), busy, label: "Publish",
+            disabled: !activeFeed || isLegacyFeed(),
+          }),
         ),
 
         !searching && screen === "profile" && React.createElement("section", null,
-          React.createElement("h2", { className: "section-title" }, short(walletAddr)),
+          React.createElement("h2", { className: "section-title" }, walletAddr ? short(walletAddr) : "Connect a wallet to view your profile"),
           React.createElement("p", { className: "section-sub" }, `${mine.length} ${mine.length === 1 ? "post" : "posts"} on chain`),
           React.createElement(Btn, {
             variant: "ghost",
