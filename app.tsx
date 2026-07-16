@@ -73,14 +73,22 @@ if (typeof document === "undefined") {
     .topbar-inner {
       display: flex;
       align-items: center;
-      gap: 12px;
-      padding: 9px 16px;
-      max-width: 980px;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 10px 20px;
+      max-width: 920px;
       width: 100%;
       margin: 0 auto;
       box-sizing: border-box;
       min-width: 0;
     }
+    .topbar-left, .topbar-right {
+      display: flex;
+      align-items: center;
+      min-width: 0;
+    }
+    .topbar-left { gap: 14px; flex-shrink: 0; }
+    .topbar-right { gap: 10px; margin-left: auto; flex-shrink: 0; }
     .topbar .brand { margin-bottom: 0; flex-shrink: 0; }
     .brand-btn {
       border: none;
@@ -93,30 +101,27 @@ if (typeof document === "undefined") {
     .brand-btn:hover { opacity: 0.7; }
     .topbar .brand-sm .brand-mark { width: 18px; height: 18px; border-radius: 4px; }
     .topbar .brand-sm .brand-name { font-size: 15px; }
-    .topbar .nav { flex: 0 0 auto; width: 204px; max-width: 204px; }
+    .topbar .nav { flex: 0 0 auto; width: 198px; }
     .topbar .search-wrap {
-      flex: 1 1 120px;
-      min-width: 0;
-      max-width: 240px;
-      width: auto;
+      width: 200px;
+      flex: 0 0 200px;
       margin-bottom: 0;
     }
     .topbar-account {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
       flex-shrink: 0;
-      margin-left: auto;
     }
     .topbar-account .wallet-addr {
       font-size: 11px;
       font-weight: 500;
       color: #737373;
-      padding: 4px 8px;
-      border-radius: 6px;
-      background: #fafafa;
-      border: 1px solid #f0f0f0;
-      max-width: 92px;
+      padding: 5px 9px;
+      border-radius: 999px;
+      background: #f5f5f5;
+      border: none;
+      max-width: 104px;
     }
     .search-icon { display: inline-flex; align-items: center; justify-content: center; color: #a3a3a3; flex-shrink: 0; }
     .sidebar { display: none !important; }
@@ -249,17 +254,21 @@ if (typeof document === "undefined") {
     .btn-ghost { color: #737373; padding: 8px 12px; font-weight: 500; }
     .btn-ghost:hover:not(:disabled) { color: #171717; }
     .btn-ghost.active { color: #0a0a0a; font-weight: 600; }
-    .btn-like {
-      color: #a3a3a3;
+    .btn-like, .btn-action {
+      color: #737373;
       font-size: 13px;
       font-weight: 500;
-      padding: 4px 0;
+      padding: 6px 8px;
       min-height: auto;
+      border-radius: 6px;
+      gap: 5px;
     }
-    .btn-like:hover:not(:disabled) { color: #525252; }
+    .btn-like:hover:not(:disabled), .btn-action:hover:not(:disabled) { color: #171717; background: #f5f5f5; }
+    .btn-like.liked { color: #0a0a0a; }
     .btn-sm { font-size: 13px; padding: 6px 10px; min-height: 32px; }
     .btn-xs { font-size: 12px; padding: 4px 8px; min-height: 28px; color: #a3a3a3; }
     .btn-xs:hover:not(:disabled) { color: #525252; }
+    .btn-primary.btn-compact { width: auto; min-width: 96px; padding: 8px 16px; }
 
     .sidebar {
       padding: 20px 16px 16px;
@@ -347,10 +356,11 @@ if (typeof document === "undefined") {
     .main {
       flex: 1;
       min-width: 0;
-      padding: 32px 16px 48px;
+      padding: 20px 16px 48px;
       padding-bottom: max(48px, env(safe-area-inset-bottom));
     }
-    .main-inner { max-width: 680px; margin: 0 auto; }
+    .main-inner { max-width: 560px; margin: 0 auto; }
+    .feed-list { display: flex; flex-direction: column; }
 
     .search-wrap {
       position: relative;
@@ -403,39 +413,124 @@ if (typeof document === "undefined") {
     .search-clear:hover { color: #525252; }
 
     .card {
-      padding: 20px 0;
-      border-bottom: 1px solid #f5f5f5;
-      transition: opacity 0.15s ease;
+      display: flex;
+      gap: 12px;
+      padding: 16px 0;
+      border-bottom: 1px solid #f0f0f0;
+      transition: background 0.12s ease;
     }
     .card:last-child { border-bottom: none; }
     .card-click { cursor: pointer; }
-    .card-click:hover { opacity: 0.75; }
-    .card-sm { padding: 16px 0; }
-    .card-meta {
+    .card-click:hover { background: #fafafa; margin: 0 -12px; padding-left: 12px; padding-right: 12px; border-radius: 10px; }
+    .card-sm { padding: 12px 0; }
+    .card-hero {
+      padding: 8px 0 20px;
+      border-bottom: 1px solid #ebebeb;
+      margin-bottom: 4px;
+    }
+    .card-hero .content { font-size: 17px; color: #171717; margin-bottom: 14px; }
+    .card-body { flex: 1; min-width: 0; }
+    .avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      flex-shrink: 0;
       display: flex;
       align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 600;
+      color: #fff;
+      letter-spacing: -0.02em;
+    }
+    .avatar-sm { width: 28px; height: 28px; font-size: 10px; }
+    .card-meta {
+      display: flex;
+      align-items: baseline;
       gap: 8px;
-      margin-bottom: 8px;
+      margin-bottom: 4px;
       flex-wrap: wrap;
     }
     .author { font-size: 13px; font-weight: 600; color: #171717; letter-spacing: -0.02em; }
-    .author-sm { font-size: 12px; font-weight: 500; }
+    .author-sm { font-size: 12px; font-weight: 600; }
     .time { font-size: 12px; color: #a3a3a3; }
     .content {
       font-size: 15px;
-      color: #404040;
-      line-height: 1.65;
-      margin-bottom: 10px;
+      color: #262626;
+      line-height: 1.55;
+      margin-bottom: 8px;
       white-space: pre-wrap;
       word-break: break-word;
       overflow-wrap: anywhere;
       letter-spacing: -0.011em;
     }
-    .card-actions { display: flex; align-items: center; gap: 12px; }
-    .reply-count { font-size: 12px; color: #a3a3a3; }
-    .sync-hint { font-size: 12px; color: #a3a3a3; margin: 0 0 12px; }
+    .card-actions { display: flex; align-items: center; gap: 2px; margin-left: -8px; }
+    .action-count { font-variant-numeric: tabular-nums; }
+    .sync-hint { font-size: 12px; color: #a3a3a3; margin: 0 0 8px; padding: 0 2px; }
 
-    .editor { margin-top: 8px; }
+    .thread { margin-top: 4px; }
+    .thread-item {
+      position: relative;
+      padding-left: 0;
+    }
+    .thread-item.depth-1 { padding-left: 20px; }
+    .thread-item.depth-2 { padding-left: 36px; }
+    .thread-item.depth-3,
+    .thread-item.depth-4,
+    .thread-item.depth-5 { padding-left: 48px; }
+    .thread-item .card {
+      border-bottom: 1px solid #f5f5f5;
+      padding: 12px 0;
+    }
+    .thread-item .card-click:hover {
+      margin: 0 -8px;
+      padding-left: 8px;
+      padding-right: 8px;
+    }
+    .reply-composer {
+      margin-top: 16px;
+      padding: 14px;
+      border: 1px solid #ebebeb;
+      border-radius: 12px;
+      background: #fafafa;
+    }
+    .reply-target {
+      font-size: 12px;
+      color: #737373;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .reply-target strong { color: #171717; font-weight: 600; }
+    .reply-composer .textarea {
+      min-height: 72px;
+      max-height: 180px;
+      border-bottom: none;
+      background: #fff;
+      border: 1px solid #e5e5e5;
+      border-radius: 8px;
+      padding: 10px 12px;
+    }
+    .reply-composer .textarea:focus { border-color: #a3a3a3; }
+    .reply-composer .editor-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 10px;
+    }
+    .reply-composer .char-count { margin: 0; }
+
+    .editor { margin-top: 4px; }
+    .editor-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 8px;
+    }
     .textarea {
       width: 100%;
       padding: 0 0 12px;
@@ -462,14 +557,16 @@ if (typeof document === "undefined") {
       font-size: 14px;
       line-height: 1.55;
       letter-spacing: -0.01em;
+      text-align: center;
     }
-    .back { margin-bottom: 24px; color: #737373; }
+    .back { margin-bottom: 16px; color: #737373; }
     .replies-label {
       font-size: 12px;
-      font-weight: 500;
-      color: #a3a3a3;
-      letter-spacing: 0.02em;
-      margin: 32px 0 8px;
+      font-weight: 600;
+      color: #737373;
+      letter-spacing: 0.01em;
+      margin: 20px 0 4px;
+      padding: 0 2px;
     }
     .search-section { margin-bottom: 32px; }
     .search-label {
@@ -482,7 +579,6 @@ if (typeof document === "undefined") {
     .user-result {
       display: flex;
       align-items: center;
-      justify-content: space-between;
       gap: 12px;
       width: 100%;
       padding: 14px 0;
@@ -491,15 +587,17 @@ if (typeof document === "undefined") {
       transition: opacity 0.15s ease;
     }
     .user-result:hover { opacity: 0.7; }
+    .user-result .author { flex: 1; min-width: 0; }
     .user-meta { font-size: 13px; color: #a3a3a3; flex-shrink: 0; }
 
     @media (min-width: 768px) {
       .landing-inner { max-width: 400px; }
-      .topbar-inner { padding: 9px 24px; gap: 14px; max-width: 1000px; }
-      .topbar .search-wrap { max-width: 320px; }
-      .main { padding: 32px 32px 64px; }
-      .textarea { min-height: 180px; font-size: 16px; }
-      .content { font-size: 16px; }
+      .topbar-inner { padding: 10px 24px; gap: 20px; }
+      .topbar .search-wrap { width: 220px; flex-basis: 220px; }
+      .main { padding: 24px 32px 64px; }
+      .textarea { min-height: 160px; font-size: 16px; }
+      .content { font-size: 15px; }
+      .card-hero .content { font-size: 18px; }
       .landing { background: #fafafa; }
       .landing-inner {
         max-width: 400px;
@@ -513,25 +611,31 @@ if (typeof document === "undefined") {
     @media (min-width: 1024px) {
       body { background: #fff; }
       .main {
-        padding: 32px 48px 64px;
+        padding: 28px 48px 64px;
         display: flex;
         justify-content: center;
       }
-      .main-inner { width: 100%; max-width: 680px; }
-      .card { padding: 24px 0; }
+      .main-inner { width: 100%; max-width: 560px; }
     }
 
-    @media (max-width: 520px) {
-      .topbar-inner { gap: 8px; padding: 8px 12px; }
-      .topbar .nav { width: 156px; max-width: 156px; }
-      .topbar .search-wrap { max-width: 120px; flex-basis: 80px; }
+    @media (max-width: 640px) {
+      .topbar-inner { gap: 10px; padding: 8px 12px; }
+      .topbar-left { gap: 10px; }
+      .topbar .nav { width: 168px; }
+      .topbar .search-wrap { width: 132px; flex-basis: 132px; }
       .topbar-account .wallet-addr { display: none; }
       .nav-btn { font-size: 11px; padding: 4px 4px; }
+      .thread-item.depth-1 { padding-left: 14px; }
+      .thread-item.depth-2,
+      .thread-item.depth-3,
+      .thread-item.depth-4,
+      .thread-item.depth-5 { padding-left: 24px; }
     }
 
-    @media (max-width: 359px) {
+    @media (max-width: 400px) {
+      .topbar .search-wrap { width: 96px; flex-basis: 96px; }
+      .topbar .nav { width: 150px; }
       .nav-btn { font-size: 10px; }
-      .topbar .search-wrap { max-width: 72px; }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -595,7 +699,7 @@ const postsFromReceipt = (receipt) => {
   for (const log of receipt.logs) {
     try {
       const ev = decodeEventLog({ abi: [POST_EV], data: log.data, topics: log.topics })
-      if (ev.eventName === "PostCreated") out.push(postFromArgs(ev.args, receipt.contractAddress ?? receipt.to))
+      if (ev.eventName === "PostCreated") out.push(postFromArgs(ev.args, log.address))
     } catch (_) {}
   }
   return out
@@ -750,27 +854,40 @@ const sanitize = (s) => s.replace(/\u0000/g, "").slice(0, MAX)
 const clean = (s) => sanitize(s).trim()
 const byNew = (a, b) => b.timestamp - a.timestamp
 const byOld = (a, b) => a.timestamp - b.timestamp
+const avatarHue = (a) => {
+  let h = 0
+  const s = (a ?? "").toLowerCase()
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0
+  return h % 360
+}
+const avatarStyle = (a) => ({ background: `hsl(${avatarHue(a)} 28% 42%)` })
+const avatarLetters = (a) => (a ? a.slice(2, 4).toUpperCase() : "??")
+const childrenOf = (posts, parent) =>
+  posts.filter((p) => p.parentId === parent.id && addrEq(p.notebook, parent.notebook)).sort(byOld)
+const countDescendants = (posts, parent) => {
+  let n = 0
+  const walk = (node) => {
+    for (const c of childrenOf(posts, node)) {
+      n++
+      walk(c)
+    }
+  }
+  walk(parent)
+  return n
+}
 const fmtTime = (ts) => new Date(ts * 1000).toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })
 
 // Social timeline: all authors, top-level only, newest first, tie-break by likes & replies.
-const buildSocialFeed = (posts, likes) => {
-  const replyCounts = new Map()
-  for (const p of posts) {
-    if (!p.parentId) continue
-    const pk = likeKey(p.notebook, p.parentId)
-    replyCounts.set(pk, (replyCounts.get(pk) ?? 0) + 1)
-  }
-  return posts
-    .filter((p) => !p.parentId && p.content?.trim())
-    .sort((a, b) => {
-      const dt = b.timestamp - a.timestamp
-      if (dt !== 0) return dt
-      const dl = (likes.get(likeKey(b.notebook, b.id)) ?? 0) - (likes.get(likeKey(a.notebook, a.id)) ?? 0)
-      if (dl !== 0) return dl
-      return (replyCounts.get(postKey(b)) ?? 0) - (replyCounts.get(postKey(a)) ?? 0)
-    })
-    .map((p) => ({ ...p, replyCount: replyCounts.get(postKey(p)) ?? 0 }))
-}
+const buildSocialFeed = (posts, likes) => posts
+  .filter((p) => !p.parentId && p.content?.trim())
+  .map((p) => ({ ...p, replyCount: countDescendants(posts, p) }))
+  .sort((a, b) => {
+    const dt = b.timestamp - a.timestamp
+    if (dt !== 0) return dt
+    const dl = (likes.get(likeKey(b.notebook, b.id)) ?? 0) - (likes.get(likeKey(a.notebook, a.id)) ?? 0)
+    if (dl !== 0) return dl
+    return b.replyCount - a.replyCount
+  })
 
 const matchesAddr = (addr, q) => {
   const needle = q.trim().toLowerCase()
@@ -1032,9 +1149,15 @@ async function connectWallet(provider) {
   return accounts[0]
 }
 
-async function createPost(w, text, parent = 0) {
-  const address = await ensureContract(w)
-  const hash = await wallet(w).writeContract({ address, abi: ABI, functionName: "createPost", args: [text, BigInt(parent)] })
+async function createPost(w, text, parent = null) {
+  const parentId = parent ? parent.id : 0
+  const address = parent?.notebook ?? (await ensureContract(w))
+  const hash = await wallet(w).writeContract({
+    address,
+    abi: ABI,
+    functionName: "createPost",
+    args: [text, BigInt(parentId)],
+  })
   const receipt = await waitReceipt(hash)
   return postsFromReceipt(receipt)
 }
@@ -1064,16 +1187,22 @@ function Btn({ children, onClick, disabled, variant = "ghost", className = "" })
   }, children)
 }
 
-function Editor({ draft, setDraft, onSubmit, busy, label }) {
-  return React.createElement("div", { className: "editor" },
+function Editor({ draft, setDraft, onSubmit, busy, label, placeholder, compact }) {
+  return React.createElement("div", { className: `editor${compact ? " editor-compact" : ""}` },
     React.createElement("textarea", {
-      className: "textarea", value: draft, maxLength: MAX, rows: 4,
-      placeholder: "Write something permanent...",
+      className: "textarea", value: draft, maxLength: MAX, rows: compact ? 3 : 4,
+      placeholder: placeholder || "Write something permanent...",
       onChange: (e) => setDraft(sanitize(e.target.value)),
     }),
-    React.createElement("div", { className: "char-count" }, `${draft.length} / ${MAX}`),
-    React.createElement(Btn, { variant: "primary", onClick: onSubmit, disabled: busy || !draft.trim() },
-      busy ? "Confirm in wallet..." : label),
+    React.createElement("div", { className: "editor-bar" },
+      React.createElement("span", { className: "char-count" }, `${draft.length} / ${MAX}`),
+      React.createElement(Btn, {
+        variant: "primary",
+        className: compact ? "btn-compact" : "",
+        onClick: onSubmit,
+        disabled: busy || !draft.trim(),
+      }, busy ? "Confirm in wallet..." : label),
+    ),
   )
 }
 
@@ -1127,23 +1256,72 @@ function SearchBar({ value, onChange }) {
 
 function UserResult({ addr, count, onOpen }) {
   return React.createElement("button", { type: "button", className: "user-result", onClick: onOpen },
+    React.createElement("span", { className: "avatar avatar-sm", style: avatarStyle(addr) }, avatarLetters(addr)),
     React.createElement("span", { className: "author" }, short(addr)),
     React.createElement("span", { className: "user-meta" }, `${count} ${count === 1 ? "post" : "posts"}`),
   )
 }
 
-function PostCard({ post, likes, replies, onOpen, onLike, small }) {
-  const cls = `card${onOpen ? " card-click" : ""}${small ? " card-sm" : ""}`
+function ActionIcon({ kind }) {
+  if (kind === "like") {
+    return React.createElement("svg", { width: 15, height: 15, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.8 },
+      React.createElement("path", { d: "M12 21s-7-4.4-9.5-8.2C.5 9.5 2.2 6 6 6c2 0 3.3 1.2 4 2.2C10.7 7.2 12 6 14 6c3.8 0 5.5 3.5 3.5 6.8C19 16.6 12 21 12 21z" }),
+    )
+  }
+  return React.createElement("svg", { width: 15, height: 15, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.8 },
+    React.createElement("path", { d: "M21 11.5a8.4 8.4 0 01-1.3 4.5 8.5 8.5 0 01-7.2 3.8 8.4 8.4 0 01-4.5-1.3L3 21l2.5-4.9A8.4 8.4 0 014.2 11.5 8.5 8.5 0 0112 3a8.5 8.5 0 019 8.5z" }),
+  )
+}
+
+function PostCard({ post, likes, replies, onOpen, onLike, onReply, small, hero }) {
+  const cls = `card${onOpen ? " card-click" : ""}${small ? " card-sm" : ""}${hero ? " card-hero" : ""}`
   return React.createElement("article", { className: cls, onClick: onOpen },
-    React.createElement("div", { className: "card-meta" },
-      React.createElement("span", { className: `author${small ? " author-sm" : ""}` }, short(post.author)),
-      React.createElement("time", { className: "time" }, fmtTime(post.timestamp)),
+    React.createElement("div", {
+      className: `avatar${small ? " avatar-sm" : ""}`,
+      style: avatarStyle(post.author),
+      "aria-hidden": "true",
+    }, avatarLetters(post.author)),
+    React.createElement("div", { className: "card-body" },
+      React.createElement("div", { className: "card-meta" },
+        React.createElement("span", { className: `author${small ? " author-sm" : ""}` }, short(post.author)),
+        React.createElement("time", { className: "time" }, fmtTime(post.timestamp)),
+      ),
+      React.createElement("p", { className: "content" }, post.content),
+      React.createElement("div", { className: "card-actions", onClick: (e) => e.stopPropagation() },
+        React.createElement(Btn, { variant: "like", onClick: onLike },
+          React.createElement(ActionIcon, { kind: "like" }),
+          React.createElement("span", { className: "action-count" }, likes > 0 ? likes : "Like"),
+        ),
+        onReply && React.createElement(Btn, { variant: "action", onClick: onReply },
+          React.createElement(ActionIcon, { kind: "reply" }),
+          React.createElement("span", { className: "action-count" }, replies > 0 ? replies : "Reply"),
+        ),
+      ),
     ),
-    React.createElement("p", { className: "content" }, post.content),
-    React.createElement("div", { className: "card-actions", onClick: (e) => e.stopPropagation() },
-      React.createElement(Btn, { variant: "like", onClick: onLike }, `${likes > 0 ? likes : ""}${likes > 0 ? " likes" : "Like"}`),
-      replies > 0 && React.createElement("span", { className: "reply-count" }, `${replies} ${replies === 1 ? "reply" : "replies"}`),
-    ),
+  )
+}
+
+function CommentTree({ root, posts, likes, depth, onLike, onReply, onOpen }) {
+  const kids = childrenOf(posts, root)
+  if (!kids.length) return null
+  return React.createElement("div", { className: depth === 0 ? "thread" : null },
+    kids.map((c) => React.createElement("div", {
+      key: postKey(c),
+      className: `thread-item depth-${Math.min(depth + 1, 5)}`,
+    },
+      React.createElement(PostCard, {
+        post: c,
+        likes: likes.get(likeKey(c.notebook, c.id)) ?? 0,
+        replies: countDescendants(posts, c),
+        small: true,
+        onOpen: () => onOpen(c),
+        onLike: () => onLike(c),
+        onReply: () => onReply(c),
+      }),
+      React.createElement(CommentTree, {
+        root: c, posts, likes, depth: depth + 1, onLike, onReply, onOpen,
+      }),
+    )),
   )
 }
 
@@ -1161,15 +1339,16 @@ function App() {
   const [busy, setBusy] = useState(false)
   const [syncing, setSyncing] = useState(false)
   const [feedLoading, setFeedLoading] = useState(true)
+  const [replyTo, setReplyTo] = useState(null)
 
-  const refresh = useCallback(async (expectIds = []) => {
+  const refresh = useCallback(async (expectKeys = []) => {
     for (let i = 0; i < 6; i++) {
       try {
         const d = await loadChain()
         let ok = false
         setPosts((prev) => {
           const next = applyChainPosts(prev, d.posts)
-          ok = !expectIds.length || expectIds.every((id) => next.some((p) => p.id === id))
+          ok = !expectKeys.length || expectKeys.every((k) => next.some((p) => postKey(p) === k))
           return next
         })
         setLikes((prev) => {
@@ -1204,15 +1383,17 @@ function App() {
     if (!walletAddr) return
     const text = clean(draft)
     if (!text) return setErr("Post cannot be empty")
-    const parentId = parent ? parent.id : 0
-    if (parentId && !posts.some((p) => p.id === parentId && addrEq(p.notebook, parent.notebook))) return setErr("Parent not found")
+    if (parent && !posts.some((p) => p.id === parent.id && addrEq(p.notebook, parent.notebook))) {
+      return setErr("Parent not found")
+    }
     setBusy(true)
     try {
-      const created = await createPost(walletAddr, text, parentId)
+      const created = await createPost(walletAddr, text, parent)
       setPosts((prev) => mergePosts(prev, created))
       setDraft("")
-      if (!parentId) setScreen("feed")
-      await refresh(created.map((p) => p.id))
+      setReplyTo(null)
+      if (!parent) setScreen("feed")
+      await refresh(created.map(postKey))
     } catch (e) { setErr(errMsg(e)) }
     finally { setBusy(false) }
   }, [walletAddr, draft, posts, refresh])
@@ -1239,20 +1420,40 @@ function App() {
 
   const feed = useMemo(() => buildSocialFeed(posts, likes), [posts, likes])
   const post = useMemo(() => posts.find((p) => postKey(p) === postId), [posts, postId])
-  const replies = useMemo(() => {
-    if (!post) return []
-    return posts.filter((p) => p.parentId === post.id && addrEq(p.notebook, post.notebook)).sort(byOld)
-  }, [posts, post])
-  const mine = useMemo(() => walletAddr ? posts.filter((p) => addrEq(p.author, walletAddr)).sort(byNew) : [], [posts, walletAddr])
+  const threadCount = useMemo(() => post ? countDescendants(posts, post) : 0, [posts, post])
+  const mine = useMemo(() => walletAddr
+    ? posts.filter((p) => addrEq(p.author, walletAddr) && !p.parentId).sort(byNew)
+    : [], [posts, walletAddr])
   const search = useMemo(() => searchAll(posts, query), [posts, query])
-  const userPosts = useMemo(() => viewAddr ? posts.filter((p) => addrEq(p.author, viewAddr)).sort(byNew) : [], [posts, viewAddr])
+  const userPosts = useMemo(() => viewAddr
+    ? posts.filter((p) => addrEq(p.author, viewAddr) && !p.parentId).sort(byNew)
+    : [], [posts, viewAddr])
   const searching = query.trim().length > 0
 
   const legacy = useMemo(() => legacyNotebook(walletAddr), [walletAddr])
 
-  const openPost = (p) => { setPostId(postKey(p)); setScreen("post"); setQuery("") }
+  const doLike = (p) => void likePost(walletAddr, p).then(refresh).catch(() => setErr("Transaction failed"))
+  const findRoot = (node) => {
+    let cur = node
+    const seen = new Set()
+    while (cur?.parentId && !seen.has(postKey(cur))) {
+      seen.add(postKey(cur))
+      const parent = posts.find((x) => x.id === cur.parentId && addrEq(x.notebook, cur.notebook))
+      if (!parent) break
+      cur = parent
+    }
+    return cur
+  }
+  const openPost = (p) => { setPostId(postKey(p)); setScreen("post"); setQuery(""); setReplyTo(null); setDraft("") }
+  const startReply = (target) => {
+    const root = findRoot(target)
+    setPostId(postKey(root))
+    setScreen("post")
+    setQuery("")
+    setReplyTo(postKey(target) === postKey(root) ? null : target)
+  }
   const openUser = (addr) => { setViewAddr(addr); setScreen("user"); setQuery("") }
-  const goScreen = (id) => { setQuery(""); setViewAddr(null); setScreen(id) }
+  const goScreen = (id) => { setQuery(""); setViewAddr(null); setReplyTo(null); setDraft(""); setScreen(id) }
 
   const resync = useCallback(async () => {
     if (!walletAddr) return
@@ -1310,20 +1511,31 @@ function App() {
 
   const postResults = (list, clickable = true) => list.map((p) => React.createElement(PostCard, {
     key: postKey(p), post: p, likes: likes.get(likeKey(p.notebook, p.id)) ?? 0,
-    replies: p.replyCount ?? 0,
+    replies: p.replyCount ?? countDescendants(posts, p),
     onOpen: clickable ? () => openPost(p) : undefined,
-    onLike: () => void likePost(walletAddr, p).then(refresh).catch(() => setErr("Transaction failed")),
+    onLike: () => doLike(p),
+    onReply: () => startReply(p),
   }))
+
+  const replyParent = replyTo ?? post
 
   return React.createElement("div", { className: "app" },
     React.createElement("header", { className: "topbar" },
       React.createElement("div", { className: "topbar-inner" },
-        React.createElement(Brand, { large: false, onClick: () => goScreen("feed") }),
-        React.createElement(Nav, { screen, searching, onSelect: goScreen }),
-        React.createElement(SearchBar, { value: query, onChange: setQuery }),
-        React.createElement("div", { className: "topbar-account" },
-          React.createElement("span", { className: "wallet-addr" }, short(walletAddr)),
-          React.createElement(Btn, { variant: "ghost", className: "btn-xs", onClick: () => { activeProvider = null; setWalletAddr(null); setScreen("feed"); setQuery("") } }, "Leave"),
+        React.createElement("div", { className: "topbar-left" },
+          React.createElement(Brand, { large: false, onClick: () => goScreen("feed") }),
+          React.createElement(Nav, { screen, searching, onSelect: goScreen }),
+        ),
+        React.createElement("div", { className: "topbar-right" },
+          React.createElement(SearchBar, { value: query, onChange: setQuery }),
+          React.createElement("div", { className: "topbar-account" },
+            React.createElement("span", { className: "wallet-addr" }, short(walletAddr)),
+            React.createElement(Btn, {
+              variant: "ghost",
+              className: "btn-xs",
+              onClick: () => { activeProvider = null; setWalletAddr(null); setScreen("feed"); setQuery(""); setReplyTo(null) },
+            }, "Leave"),
+          ),
         ),
       ),
     ),
@@ -1349,7 +1561,7 @@ function App() {
         !searching && screen === "feed" && (feedLoading && !feed.length
           ? React.createElement("p", { className: "empty" }, "Loading feed…")
           : feed.length
-          ? React.createElement(React.Fragment, null,
+          ? React.createElement("div", { className: "feed-list" },
             syncing && React.createElement("p", { className: "sync-hint" }, "Checking for older notebooks…"),
             postResults(feed),
           )
@@ -1360,23 +1572,48 @@ function App() {
               ? "Loading feed…"
               : "No posts yet. Everyone reads the same on-chain feed — publish from Write.")
             : "No posts yet. Connect wallet and publish — first post creates the shared feed for everyone.")),
-        !searching && screen === "post" && post && React.createElement("section", null,
-          React.createElement(Btn, { variant: "ghost", className: "back btn-sm", onClick: () => goScreen("feed") }, "← Back"),
+
+        !searching && screen === "post" && post && React.createElement("section", { className: "post-view" },
+          React.createElement(Btn, { variant: "ghost", className: "back btn-sm", onClick: () => goScreen("feed") }, "← Feed"),
           React.createElement(PostCard, {
-            post, likes: likes.get(likeKey(post.notebook, post.id)) ?? 0,
-            onLike: () => void likePost(walletAddr, post).then(refresh).catch(() => setErr("Transaction failed")),
+            post, hero: true,
+            likes: likes.get(likeKey(post.notebook, post.id)) ?? 0,
+            replies: threadCount,
+            onLike: () => doLike(post),
+            onReply: () => setReplyTo(null),
           }),
-          replies.length > 0 && React.createElement("p", { className: "replies-label" }, `${replies.length} ${replies.length === 1 ? "reply" : "replies"}`),
-          replies.map((r) => React.createElement(PostCard, {
-            key: postKey(r), post: r, likes: likes.get(likeKey(r.notebook, r.id)) ?? 0, small: true,
-          })),
-          React.createElement(Editor, { draft, setDraft, onSubmit: () => void submit(post), busy, label: "Reply" }),
+          threadCount > 0 && React.createElement("p", { className: "replies-label" },
+            `${threadCount} ${threadCount === 1 ? "reply" : "replies"}`),
+          React.createElement(CommentTree, {
+            root: post, posts, likes, depth: 0,
+            onLike: doLike,
+            onReply: startReply,
+            onOpen: openPost,
+          }),
+          React.createElement("div", { className: "reply-composer" },
+            replyTo && React.createElement("div", { className: "reply-target" },
+              React.createElement("span", null, "Replying to ", React.createElement("strong", null, short(replyTo.author))),
+              React.createElement(Btn, { variant: "ghost", className: "btn-xs", onClick: () => setReplyTo(null) }, "Cancel"),
+            ),
+            React.createElement(Editor, {
+              draft, setDraft,
+              onSubmit: () => void submit(replyParent),
+              busy,
+              label: "Reply",
+              compact: true,
+              placeholder: replyTo
+                ? `Reply to ${short(replyTo.author)}…`
+                : "Write a reply…",
+            }),
+          ),
         ),
+
         !searching && screen === "compose" && React.createElement(React.Fragment, null,
           !contractAddr() && React.createElement("p", { className: "section-sub" },
             "First post deploys the shared Zettel feed for everyone (one-time gas fee)."),
           React.createElement(Editor, { draft, setDraft, onSubmit: () => void submit(null), busy, label: "Publish" }),
         ),
+
         !searching && screen === "profile" && React.createElement("section", null,
           React.createElement("h2", { className: "section-title" }, short(walletAddr)),
           React.createElement("p", { className: "section-sub" }, `${mine.length} ${mine.length === 1 ? "post" : "posts"} on chain`),
@@ -1396,23 +1633,32 @@ function App() {
           !syncing && !mine.length && feedsToLoad().length > 0 && React.createElement("p", { className: "section-sub" },
             `Checked ${feedsToLoad().length} on-chain notebook${feedsToLoad().length === 1 ? "" : "s"} — no posts from this wallet yet.`),
           mine.length
-            ? mine.map((p) => React.createElement(PostCard, {
-                key: postKey(p), post: p, likes: likes.get(likeKey(p.notebook, p.id)) ?? 0, small: true,
+            ? React.createElement("div", { className: "feed-list" },
+              mine.map((p) => React.createElement(PostCard, {
+                key: postKey(p), post: p, likes: likes.get(likeKey(p.notebook, p.id)) ?? 0,
+                replies: countDescendants(posts, p), small: true,
                 onOpen: () => openPost(p),
-                onLike: () => void likePost(walletAddr, p).then(refresh).catch(() => setErr("Transaction failed")),
-              }))
+                onLike: () => doLike(p),
+                onReply: () => startReply(p),
+              })),
+            )
             : React.createElement("p", { className: "empty" }, "You haven't posted yet."),
         ),
+
         !searching && screen === "user" && viewAddr && React.createElement("section", null,
-          React.createElement(Btn, { variant: "ghost", className: "back btn-sm", onClick: () => goScreen("feed") }, "← Back"),
+          React.createElement(Btn, { variant: "ghost", className: "back btn-sm", onClick: () => goScreen("feed") }, "← Feed"),
           React.createElement("h2", { className: "section-title" }, short(viewAddr)),
           React.createElement("p", { className: "section-sub" }, `${userPosts.length} ${userPosts.length === 1 ? "post" : "posts"} on chain`),
           userPosts.length
-            ? userPosts.map((p) => React.createElement(PostCard, {
-                key: postKey(p), post: p, likes: likes.get(likeKey(p.notebook, p.id)) ?? 0, small: true,
+            ? React.createElement("div", { className: "feed-list" },
+              userPosts.map((p) => React.createElement(PostCard, {
+                key: postKey(p), post: p, likes: likes.get(likeKey(p.notebook, p.id)) ?? 0,
+                replies: countDescendants(posts, p), small: true,
                 onOpen: () => openPost(p),
-                onLike: () => void likePost(walletAddr, p).then(refresh).catch(() => setErr("Transaction failed")),
-              }))
+                onLike: () => doLike(p),
+                onReply: () => startReply(p),
+              })),
+            )
             : React.createElement("p", { className: "empty" }, "No posts from this address."),
         ),
       ),
