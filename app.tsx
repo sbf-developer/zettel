@@ -20,129 +20,221 @@ if (typeof document === "undefined") {
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="On-chain zettelkasten. Atomic notes, permanently linked." />
-  <meta name="theme-color" content="#f5f5f4" />
+  <meta name="theme-color" content="#ffffff" />
   <title>Zettel</title>
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23f5f5f4'/%3E%3Crect x='7' y='6' width='18' height='22' rx='3' fill='%23fff' stroke='%23e7e5e4'/%3E%3Cpath d='M11 12h10M11 16h8M11 20h9' stroke='%23d6d3d1' stroke-width='1.5' stroke-linecap='round'/%3E%3Ccircle cx='23' cy='23' r='3' fill='%23111'/%3E%3C/svg%3E" />
-  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23f5f5f4'/%3E%3Crect x='7' y='6' width='18' height='22' rx='3' fill='%23fff' stroke='%23e7e5e4'/%3E%3Cpath d='M11 12h10M11 16h8M11 20h9' stroke='%23d6d3d1' stroke-width='1.5' stroke-linecap='round'/%3E%3Ccircle cx='23' cy='23' r='3' fill='%23111'/%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23fff'/%3E%3Crect x='7' y='6' width='18' height='22' rx='3' fill='%23fafafa' stroke='%23ebebeb'/%3E%3Cpath d='M11 12h10M11 16h8M11 20h9' stroke='%23d4d4d4' stroke-width='1.5' stroke-linecap='round'/%3E%3Ccircle cx='23' cy='23' r='3' fill='%230a0a0a'/%3E%3C/svg%3E" />
+  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23fff'/%3E%3Crect x='7' y='6' width='18' height='22' rx='3' fill='%23fafafa' stroke='%23ebebeb'/%3E%3Cpath d='M11 12h10M11 16h8M11 20h9' stroke='%23d4d4d4' stroke-width='1.5' stroke-linecap='round'/%3E%3Ccircle cx='23' cy='23' r='3' fill='%230a0a0a'/%3E%3C/svg%3E" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html { -webkit-font-smoothing: antialiased; }
+    html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; text-rendering: optimizeLegibility; }
     body {
-      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      font-family: "Inter", system-ui, -apple-system, sans-serif;
       font-size: 15px;
-      line-height: 1.5;
-      color: #111;
-      background: #f5f5f4;
+      line-height: 1.6;
+      color: #0a0a0a;
+      background: #fff;
       min-height: 100vh;
     }
     button, textarea { font: inherit; }
     button { cursor: pointer; border: none; background: none; }
-    button:disabled { cursor: not-allowed; opacity: 0.45; }
+    button:disabled { cursor: not-allowed; }
 
-    .shell { max-width: 520px; margin: 0 auto; padding: 32px 20px 48px; }
+    .shell { max-width: 480px; margin: 0 auto; padding: 40px 24px 64px; }
     .landing {
       min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 24px;
-    }
-    .landing-card {
-      width: 100%;
-      max-width: 400px;
-      text-align: center;
-      padding: 48px 32px;
+      padding: 32px 24px;
       background: #fff;
-      border-radius: 16px;
-      border: 1px solid #e7e5e4;
     }
-    .logo { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 8px; }
-    .tagline { color: #78716c; font-size: 14px; margin-bottom: 28px; line-height: 1.6; }
-    .error { color: #dc2626; font-size: 13px; margin-bottom: 16px; }
+    .landing-inner {
+      width: 100%;
+      max-width: 360px;
+      text-align: center;
+    }
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .brand-lg { margin-bottom: 16px; }
+    .brand-mark {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      background: #fafafa;
+      border: 1px solid #ebebeb;
+      position: relative;
+      flex-shrink: 0;
+    }
+    .brand-mark::after {
+      content: "";
+      position: absolute;
+      right: 5px;
+      bottom: 5px;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #0a0a0a;
+    }
+    .brand-name {
+      font-size: 28px;
+      font-weight: 600;
+      letter-spacing: -0.045em;
+      color: #0a0a0a;
+      line-height: 1;
+    }
+    .brand-sm .brand-mark { width: 22px; height: 22px; border-radius: 6px; }
+    .brand-sm .brand-mark::after { width: 5px; height: 5px; right: 4px; bottom: 4px; }
+    .brand-sm .brand-name { font-size: 17px; letter-spacing: -0.035em; }
+    .tagline {
+      color: #737373;
+      font-size: 15px;
+      font-weight: 400;
+      margin-bottom: 36px;
+      line-height: 1.55;
+      letter-spacing: -0.01em;
+    }
+    .error {
+      color: #dc2626;
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: 20px;
+      letter-spacing: -0.01em;
+    }
 
     .btn {
       display: inline-flex;
       align-items: center;
       justify-content: center;
       gap: 6px;
-      padding: 10px 18px;
-      border-radius: 10px;
+      padding: 12px 20px;
+      border-radius: 12px;
       font-size: 14px;
       font-weight: 500;
-      transition: background 0.15s, color 0.15s, border-color 0.15s;
+      letter-spacing: -0.01em;
+      transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
     }
-    .btn-primary { background: #111; color: #fff; width: 100%; }
-    .btn-primary:hover:not(:disabled) { background: #292524; }
-    .btn-ghost { color: #57534e; padding: 8px 12px; border-radius: 8px; }
-    .btn-ghost:hover:not(:disabled) { background: #f5f5f4; color: #111; }
-    .btn-ghost.active { background: #111; color: #fff; }
+    .btn:active:not(:disabled) { transform: scale(0.98); }
+    .btn-primary {
+      background: #0a0a0a;
+      color: #fff;
+      width: 100%;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+    }
+    .btn-primary:hover:not(:disabled) { background: #171717; }
+    .btn-primary:disabled { background: #f4f4f5; color: #a1a1aa; box-shadow: none; }
+    .btn-ghost { color: #525252; padding: 8px 14px; border-radius: 10px; font-weight: 500; }
+    .btn-ghost:hover:not(:disabled) { background: #f5f5f5; color: #0a0a0a; }
+    .btn-ghost.active { background: #0a0a0a; color: #fff; }
     .btn-like {
-      color: #78716c;
+      color: #737373;
       font-size: 13px;
-      padding: 6px 10px;
-      border-radius: 8px;
-      border: 1px solid #e7e5e4;
+      font-weight: 500;
+      padding: 7px 12px;
+      border-radius: 999px;
+      background: #fafafa;
+      border: 1px solid #f0f0f0;
     }
-    .btn-like:hover:not(:disabled) { background: #fafaf9; color: #111; border-color: #d6d3d1; }
-    .btn-sm { font-size: 13px; padding: 8px 14px; }
+    .btn-like:hover:not(:disabled) { background: #f5f5f5; color: #0a0a0a; border-color: #e5e5e5; }
+    .btn-sm { font-size: 13px; padding: 7px 12px; }
 
     .header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 24px;
-      padding-bottom: 16px;
-      border-bottom: 1px solid #e7e5e4;
+      margin-bottom: 28px;
     }
-    .header-title { font-size: 17px; font-weight: 600; letter-spacing: -0.02em; }
-    .wallet-row { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #78716c; }
-    .wallet-addr { font-variant-numeric: tabular-nums; }
+    .wallet-row { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #737373; }
+    .wallet-addr {
+      font-variant-numeric: tabular-nums;
+      font-weight: 500;
+      letter-spacing: -0.01em;
+      padding: 6px 10px;
+      background: #fafafa;
+      border-radius: 8px;
+    }
 
-    .nav { display: flex; gap: 4px; margin-bottom: 20px; }
+    .nav {
+      display: flex;
+      gap: 2px;
+      margin-bottom: 24px;
+      padding: 4px;
+      background: #f5f5f5;
+      border-radius: 14px;
+    }
+    .nav .btn { flex: 1; border-radius: 10px; }
     .card {
       background: #fff;
-      border: 1px solid #e7e5e4;
-      border-radius: 12px;
-      padding: 16px;
-      margin-bottom: 10px;
-      transition: border-color 0.15s;
+      border: 1px solid #f0f0f0;
+      border-radius: 16px;
+      padding: 18px;
+      margin-bottom: 12px;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
     }
     .card-click { cursor: pointer; }
-    .card-click:hover { border-color: #d6d3d1; }
-    .card-sm { padding: 14px; }
+    .card-click:hover { border-color: #e5e5e5; box-shadow: 0 4px 24px rgba(0,0,0,0.04); }
+    .card-sm { padding: 16px; border-radius: 14px; }
     .card-meta {
       display: flex;
-      align-items: baseline;
-      gap: 8px;
-      margin-bottom: 8px;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
       flex-wrap: wrap;
     }
-    .author { font-size: 14px; font-weight: 600; color: #111; }
-    .author-sm { font-size: 13px; }
-    .time { font-size: 12px; color: #a8a29e; }
-    .content { font-size: 15px; color: #292524; line-height: 1.55; margin-bottom: 12px; white-space: pre-wrap; word-break: break-word; }
+    .author { font-size: 13px; font-weight: 600; color: #0a0a0a; letter-spacing: -0.02em; }
+    .author-sm { font-size: 12px; }
+    .time { font-size: 12px; color: #a3a3a3; font-weight: 400; }
+    .content {
+      font-size: 15px;
+      color: #262626;
+      line-height: 1.65;
+      margin-bottom: 14px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      letter-spacing: -0.011em;
+    }
     .card-actions { display: flex; gap: 8px; }
 
-    .editor { margin-top: 16px; }
+    .editor { margin-top: 20px; }
     .textarea {
       width: 100%;
-      padding: 14px;
-      border: 1px solid #e7e5e4;
-      border-radius: 12px;
-      background: #fff;
-      color: #111;
+      padding: 16px;
+      border: 1px solid #f0f0f0;
+      border-radius: 14px;
+      background: #fafafa;
+      color: #0a0a0a;
       resize: vertical;
-      min-height: 100px;
-      line-height: 1.5;
-      transition: border-color 0.15s, box-shadow 0.15s;
+      min-height: 120px;
+      line-height: 1.6;
+      letter-spacing: -0.011em;
+      transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
     }
-    .textarea:focus { outline: none; border-color: #a8a29e; box-shadow: 0 0 0 3px rgba(0,0,0,0.04); }
-    .char-count { font-size: 12px; color: #a8a29e; margin: 8px 0 12px; text-align: right; }
-    .section-title { font-size: 18px; font-weight: 600; margin-bottom: 4px; letter-spacing: -0.02em; }
-    .section-sub { font-size: 13px; color: #78716c; margin-bottom: 16px; }
-    .empty { text-align: center; padding: 48px 20px; color: #a8a29e; font-size: 14px; }
-    .back { margin-bottom: 16px; }
-    .replies-label { font-size: 12px; font-weight: 600; color: #a8a29e; text-transform: uppercase; letter-spacing: 0.04em; margin: 20px 0 10px; }
+    .textarea::placeholder { color: #a3a3a3; }
+    .textarea:focus {
+      outline: none;
+      background: #fff;
+      border-color: #d4d4d4;
+      box-shadow: 0 0 0 4px rgba(0,0,0,0.03);
+    }
+    .char-count { font-size: 12px; color: #a3a3a3; margin: 10px 2px 14px; text-align: right; font-weight: 400; }
+    .section-title { font-size: 15px; font-weight: 600; margin-bottom: 4px; letter-spacing: -0.02em; color: #0a0a0a; }
+    .section-sub { font-size: 13px; color: #737373; margin-bottom: 20px; }
+    .empty { text-align: center; padding: 56px 24px; color: #a3a3a3; font-size: 14px; letter-spacing: -0.01em; }
+    .back { margin-bottom: 20px; }
+    .replies-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #a3a3a3;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin: 28px 0 12px;
+    }
   </style>
 </head>
 <body>
@@ -176,21 +268,34 @@ const fmtTime = (ts) => new Date(ts * 1000).toLocaleString(undefined, { month: "
 const contractAddr = () => localStorage.getItem(STORE_CONTRACT)
 const fromBlock = () => BigInt(localStorage.getItem(STORE_BLOCK) ?? "0")
 const pub = (rpc) => createPublicClient({ chain: mainnet, transport: http(rpc) })
+const walletPub = () => createPublicClient({ chain: mainnet, transport: custom(window.ethereum) })
 const wallet = (account) => {
   if (!window.ethereum) throw new Error("No wallet")
   return createWalletClient({ chain: mainnet, transport: custom(window.ethereum), account })
 }
 
+const errMsg = (e) => {
+  if (e?.code === 4001) return "Cancelled in wallet"
+  if (e?.shortMessage) return e.shortMessage
+  if (e instanceof Error) return e.message
+  return "Something went wrong"
+}
+
 async function withRpc(fn) {
-  for (const rpc of RPCS) try { return await fn(rpc) } catch {}
-  throw new Error("RPC failed")
+  let last
+  for (const rpc of RPCS) try { return await fn(rpc) } catch (e) { last = e }
+  throw last ?? new Error("RPC failed")
+}
+
+async function waitReceipt(hash) {
+  return walletPub().waitForTransactionReceipt({ hash, timeout: 120_000 })
 }
 
 async function ensureContract(account) {
   const saved = contractAddr()
   if (saved) return saved
   const tx = await wallet(account).deployContract({ abi: ABI, bytecode: BYTECODE })
-  const receipt = await withRpc((rpc) => pub(rpc).waitForTransactionReceipt({ hash: tx }))
+  const receipt = await waitReceipt(tx)
   if (!receipt.contractAddress) throw new Error("Deploy failed")
   localStorage.setItem(STORE_CONTRACT, receipt.contractAddress)
   localStorage.setItem(STORE_BLOCK, receipt.blockNumber.toString())
@@ -226,22 +331,32 @@ async function loadChain() {
 }
 
 async function connectWallet() {
-  if (!window.ethereum) throw new Error("Install MetaMask")
-  const [address] = await createWalletClient({ chain: mainnet, transport: custom(window.ethereum) }).requestAddresses()
-  try { await window.ethereum.request({ method: "wallet_switchEthereumChain", params: [{ chainId: "0x1" }] }) } catch {}
+  if (!window.ethereum) throw new Error("Install MetaMask or another wallet")
+  const client = createWalletClient({ chain: mainnet, transport: custom(window.ethereum) })
+  const [address] = await client.requestAddresses()
+  try {
+    await window.ethereum.request({ method: "wallet_switchEthereumChain", params: [{ chainId: "0x1" }] })
+  } catch (e) {
+    if (e?.code === 4001) throw new Error("Switch to Ethereum mainnet to continue")
+  }
   return address
 }
 
 async function createPost(w, text, parent = 0) {
-  const address = contractAddr()
-  if (!address) throw new Error("No contract")
+  const address = await ensureContract(w)
   await wallet(w).writeContract({ address, abi: ABI, functionName: "createPost", args: [text, BigInt(parent)] })
 }
 
 async function likePost(w, id) {
-  const address = contractAddr()
-  if (!address) throw new Error("No contract")
+  const address = await ensureContract(w)
   await wallet(w).writeContract({ address, abi: ABI, functionName: "likePost", args: [BigInt(id)] })
+}
+
+function Brand({ large }) {
+  return React.createElement("div", { className: `brand${large ? " brand-lg" : " brand-sm"}` },
+    React.createElement("span", { className: "brand-mark", "aria-hidden": "true" }),
+    React.createElement("span", { className: "brand-name" }, "Zettel"),
+  )
 }
 
 function Btn({ children, onClick, disabled, variant = "ghost", className = "" }) {
@@ -287,6 +402,7 @@ function App() {
   const [draft, setDraft] = useState("")
   const [err, setErr] = useState(null)
   const [busy, setBusy] = useState(false)
+  const [status, setStatus] = useState("")
 
   const refresh = useCallback(async () => {
     try {
@@ -314,20 +430,22 @@ function App() {
       setDraft("")
       if (!parentId) setScreen("feed")
       await refresh()
-    } catch { setErr("Transaction failed") }
+    } catch (e) { setErr(errMsg(e)) }
     finally { setBusy(false) }
   }, [walletAddr, draft, posts, refresh])
 
   const connect = useCallback(async () => {
     setBusy(true)
     setErr(null)
+    setStatus("Confirm in wallet…")
     try {
       const addr = await connectWallet()
-      await ensureContract(addr)
       setWalletAddr(addr)
+      setStatus("")
       await refresh()
     } catch (e) {
-      setErr(e instanceof Error ? e.message : "Connect failed")
+      setErr(errMsg(e))
+      setStatus("")
     } finally { setBusy(false) }
   }, [refresh])
 
@@ -338,12 +456,13 @@ function App() {
 
   if (!walletAddr) {
     return React.createElement("div", { className: "landing" },
-      React.createElement("div", { className: "landing-card" },
-        React.createElement("h1", { className: "logo" }, "Zettel"),
+      React.createElement("div", { className: "landing-inner" },
+        React.createElement(Brand, { large: true }),
         React.createElement("p", { className: "tagline" }, "Atomic notes on chain. Linked permanently."),
         err && React.createElement("p", { className: "error" }, err),
+        status && !err && React.createElement("p", { className: "tagline", style: { marginBottom: 20, fontSize: 13 } }, status),
         React.createElement(Btn, { variant: "primary", onClick: () => void connect(), disabled: busy },
-          busy ? "Connecting..." : "Connect Wallet"),
+          busy ? (status || "Connecting…") : "Connect wallet"),
       ),
     )
   }
@@ -356,7 +475,7 @@ function App() {
 
   return React.createElement("div", { className: "shell" },
     React.createElement("header", { className: "header" },
-      React.createElement("span", { className: "header-title" }, "Zettel"),
+      React.createElement(Brand, { large: false }),
       React.createElement("div", { className: "wallet-row" },
         React.createElement("span", { className: "wallet-addr" }, short(walletAddr)),
         React.createElement(Btn, { variant: "ghost", className: "btn-sm", onClick: () => { setWalletAddr(null); setScreen("feed") } }, "Leave"),
@@ -382,7 +501,11 @@ function App() {
       replies.map((r) => React.createElement(PostCard, { key: r.id, post: r, likes: likes.get(r.id) ?? 0, small: true })),
       React.createElement(Editor, { draft, setDraft, onSubmit: () => void submit(post.id), busy, label: "Reply" }),
     ),
-    screen === "compose" && React.createElement(Editor, { draft, setDraft, onSubmit: () => void submit(0), busy, label: "Publish" }),
+    screen === "compose" && React.createElement(React.Fragment, null,
+      !contractAddr() && React.createElement("p", { className: "section-sub", style: { marginBottom: 12 } },
+        "First post deploys your on-chain notebook (one-time gas fee)."),
+      React.createElement(Editor, { draft, setDraft, onSubmit: () => void submit(0), busy, label: "Publish" }),
+    ),
     screen === "profile" && React.createElement("section", null,
       React.createElement("h2", { className: "section-title" }, short(walletAddr)),
       React.createElement("p", { className: "section-sub" }, `${mine.length} ${mine.length === 1 ? "post" : "posts"} on chain`),
