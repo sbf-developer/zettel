@@ -268,6 +268,11 @@ const errMsg = (e) => {
   return "Something went wrong"
 }
 
+const withTimeout = (promise, ms, msg) => Promise.race([
+  promise,
+  new Promise((_, reject) => setTimeout(() => reject(new Error(msg)), ms)),
+])
+
 async function withRpc(fn) {
   let last
   for (const rpc of RPCS) try { return await fn(rpc) } catch (e) { last = e }
@@ -318,13 +323,29 @@ async function loadChain() {
 }
 
 async function connectWallet() {
-  if (!window.ethereum) throw new Error("Install MetaMask or another wallet")
-  const client = createWalletClient({ chain: mainnet, transport: custom(window.ethereum) })
-  const [address] = await client.requestAddresses()
+  const eth = window.ethereum
+  if (!eth?.request) throw new Error("Install MetaMask or another wallet")
+  await withTimeout(
+    eth.request({ method: "eth_chainId" }),
+    8_000,
+    "Wallet not responding — restart MetaMask, then try again",
+  )
+  const accounts = await withTimeout(
+    eth.request({ method: "eth_requestAccounts" }),
+    60_000,
+    "Wallet not responding — open MetaMask, approve the connection, or restart it",
+  )
+  if (!accounts?.length) throw new Error("No account selected")
+  const address = accounts[0]
   try {
-    await window.ethereum.request({ method: "wallet_switchEthereumChain", params: [{ chainId: "0x1" }] })
+    await withTimeout(
+      eth.request({ method: "wallet_switchEthereumChain", params: [{ chainId: "0x1" }] }),
+      30_000,
+      "Wallet not responding — restart MetaMask, then try again",
+    )
   } catch (e) {
-    if (e?.code === 4001) throw new Error("Switch to Ethereum mainnet to continue")
+    if (e?.code === 4001) throw new Error("Cancelled in wallet")
+    if (e instanceof Error && e.message.includes("not responding")) throw e
   }
   return address
 }
@@ -389,7 +410,6 @@ function App() {
   const [draft, setDraft] = useState("")
   const [err, setErr] = useState(null)
   const [busy, setBusy] = useState(false)
-  const [status, setStatus] = useState("")
 
   const refresh = useCallback(async () => {
     try {
@@ -405,6 +425,14 @@ function App() {
     const t = setInterval(() => void refresh(), POLL_MS)
     return () => clearInterval(t)
   }, [refresh])
+
+  useEffect(() => {
+    const eth = window.ethereum
+    if (!eth?.request) return
+    withTimeout(eth.request({ method: "eth_accounts" }), 8_000, "")
+      .then((accs) => { if (accs?.[0]) setWalletAddr(accs[0]) })
+      .catch(() => {})
+  }, [])
 
   const submit = useCallback(async (parentId = 0) => {
     if (!walletAddr) return
@@ -424,15 +452,12 @@ function App() {
   const connect = useCallback(async () => {
     setBusy(true)
     setErr(null)
-    setStatus("Confirm in wallet…")
     try {
       const addr = await connectWallet()
       setWalletAddr(addr)
-      setStatus("")
-      await refresh()
+      void refresh()
     } catch (e) {
       setErr(errMsg(e))
-      setStatus("")
     } finally { setBusy(false) }
   }, [refresh])
 
@@ -447,9 +472,8 @@ function App() {
         React.createElement(Brand, { large: true }),
         React.createElement("p", { className: "tagline" }, "Atomic notes on chain. Linked permanently."),
         err && React.createElement("p", { className: "error" }, err),
-        status && !err && React.createElement("p", { className: "tagline", style: { marginBottom: 20, fontSize: 13 } }, status),
         React.createElement(Btn, { variant: "primary", onClick: () => void connect(), disabled: busy },
-          busy ? (status || "Connecting…") : "Connect wallet"),
+          busy ? "Confirm in wallet…" : "Connect wallet"),
       ),
     )
   }
