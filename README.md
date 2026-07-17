@@ -1,6 +1,6 @@
 # Zettel
 
-On-chain zettelkasten. Atomic notes, permanently linked.
+On-chain. Atomic notes, permanently linked.
 
 ![Zettel landing screen](screenshot.png)
 
